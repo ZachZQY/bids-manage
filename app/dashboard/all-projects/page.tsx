@@ -15,7 +15,6 @@ import {
   CircularProgress
 } from "@mui/material"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
 import Pagination from "@/app/components/Pagination"
 import type { BidStatus } from "@/types/schema"
 
@@ -93,10 +92,7 @@ export default function AllProjectsPage() {
         </Paper>
       )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
           <Table>
             <TableHead>
@@ -161,7 +157,7 @@ export default function AllProjectsPage() {
             <Typography color="text.secondary">暂无项目数据</Typography>
           </Paper>
         )}
-      </motion.div>
+      </div>
     </Box>
   )
 } 

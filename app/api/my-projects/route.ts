@@ -11,7 +11,9 @@ export async function GET(request: NextRequest) {
     const pageSize = Number(searchParams.get('pageSize')) || 10
 
     // 从 cookie 获取用户信息
-    const userCookie = cookies().get('user')
+    const cookieStore = await cookies()
+    const userCookie = cookieStore.get('user')
+    
     if (!userCookie?.value) {
       return NextResponse.json(
         { error: '未登录' },
@@ -49,10 +51,16 @@ export async function GET(request: NextRequest) {
       pageSize
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('获取我的项目失败:', error)
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
     return NextResponse.json(
-      { error: error.message || '获取项目列表失败' },
+      { error: '获取项目列表失败' },
       { status: 500 }
     )
   }

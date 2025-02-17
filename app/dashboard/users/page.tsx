@@ -16,7 +16,6 @@ import {
 } from "@mui/material"
 import { Add } from "@mui/icons-material"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
 import Pagination from "@/app/components/Pagination"
 
 interface User {
@@ -98,10 +97,7 @@ export default function UsersPage() {
         </Paper>
       )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
           <Table>
             <TableHead>
@@ -189,7 +185,7 @@ export default function UsersPage() {
             <Typography color="text.secondary">暂无用户数据</Typography>
           </Paper>
         )}
-      </motion.div>
+      </div>
     </Box>
   )
 } 

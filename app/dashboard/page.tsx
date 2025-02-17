@@ -18,7 +18,6 @@ import {
 } from "@mui/material"
 import { Add } from "@mui/icons-material"
 import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
 import { useUser } from "@/app/contexts/user"
 import Pagination from "@/app/components/Pagination"
 import ProjectForm, { ProjectFormData } from "@/app/components/ProjectForm"
@@ -63,7 +62,7 @@ export default function DashboardPage() {
       
       setProjects(data.projects)
       setTotal(data.total)
-    } catch (err: any) {
+    } catch (err:any) {
       setError(err.message)
     } finally {
       setLoading(false)
@@ -148,10 +147,7 @@ export default function DashboardPage() {
       />
 
       {/* 项目列表 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
           <Table>
             <TableHead>
@@ -220,7 +216,7 @@ export default function DashboardPage() {
             <Typography color="text.secondary">暂无待接单项目</Typography>
           </Paper>
         )}
-      </motion.div>
+      </div>
     </Box>
   )
 } 

@@ -16,8 +16,7 @@ import {
   TableCell,
   Button
 } from "@mui/material"
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useState, useCallback } from "react"
 import { useUser } from "@/app/contexts/user"
 import Pagination from "@/app/components/Pagination"
 
@@ -38,26 +37,27 @@ export default function MyProjectsPage() {
   const [total, setTotal] = useState(0)
   const pageSize = 10
 
-  useEffect(() => {
-    fetchProjects()
-  }, [page])
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async (pageNum: number) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/my-projects?page=${page}&pageSize=${pageSize}`)
+      const res = await fetch(`/api/my-projects?page=${pageNum}&pageSize=${pageSize}`)
       const data = await res.json()
       
       if (!res.ok) throw new Error(data.error)
       
-      setProjects(data.projects || [])
-      setTotal(data.total || 0)
-    } catch (err: any) {
-      setError(err.message)
+      setProjects(data.projects)
+      setTotal(data.total)
+    } catch (err) {
+      console.error('获取项目失败:', err)
+      setError(err instanceof Error ? err.message : '获取项目列表失败')
     } finally {
       setLoading(false)
     }
-  }
+  }, [pageSize])
+
+  useEffect(() => {
+    fetchProjects(page)
+  }, [page, fetchProjects])
 
   if (loading) {
     return (
@@ -107,10 +107,7 @@ export default function MyProjectsPage() {
       )}
 
       {/* 项目列表 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div>
         <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
           <Table>
             <TableHead>
@@ -165,23 +162,21 @@ export default function MyProjectsPage() {
           </Table>
         </TableContainer>
 
-        {projects.length > 0 && (
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onChange={setPage}
-            />
-          </Box>
-        )}
-
         {projects.length === 0 && !error && (
           <Paper sx={{ p: 6, textAlign: 'center', bgcolor: '#F8F9FA' }}>
             <Typography color="text.secondary">暂无项目数据</Typography>
           </Paper>
         )}
-      </motion.div>
+
+        {projects.length > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onChange={setPage}
+          />
+        )}
+      </div>
     </Box>
   )
 } 

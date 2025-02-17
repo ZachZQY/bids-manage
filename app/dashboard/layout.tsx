@@ -26,7 +26,6 @@ import {
   Logout as LogoutIcon,
   Menu as MenuIcon
 } from "@mui/icons-material"
-import { motion } from "framer-motion"
 import { useUser } from '@/app/contexts/user'
 import { useState } from 'react'
 
@@ -104,9 +103,6 @@ export default function DashboardLayout({
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* 侧边栏 */}
       <Paper
-        component={motion.div}
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
         sx={{
           width: 280,
           borderRadius: 0,
@@ -200,9 +196,6 @@ export default function DashboardLayout({
 
       {/* 主内容区 */}
       <Box
-        component={motion.main}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
         sx={{ flex: 1, bgcolor: 'grey.50' }}
       >
         {children}

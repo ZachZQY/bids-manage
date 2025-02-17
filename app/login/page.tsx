@@ -16,7 +16,6 @@ import {
   IconButton
 } from "@mui/material"
 import { Visibility, VisibilityOff, Login as LoginIcon } from "@mui/icons-material"
-import { motion } from "framer-motion"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -62,11 +61,7 @@ export default function LoginPage() {
           justifyContent: 'center'
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ width: '100%' }}
-        >
+        <div>
           <Card elevation={8}>
             <CardContent sx={{ p: 4 }}>
               <Box component="form" onSubmit={handleSubmit}>
@@ -85,14 +80,11 @@ export default function LoginPage() {
                 </Typography>
 
                 {error && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                  >
+                  <div>
                     <Alert severity="error" sx={{ mb: 3 }}>
                       {error}
                     </Alert>
-                  </motion.div>
+                  </div>
                 )}
 
                 <TextField
@@ -135,7 +127,7 @@ export default function LoginPage() {
               </Box>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </Box>
     </Container>
   )

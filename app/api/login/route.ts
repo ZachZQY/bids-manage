@@ -30,16 +30,17 @@ export async function POST(request: Request) {
     }
 
     const token = 'test-token'; // 实际应用中应该生成真实的 token
+    const cookieStore = await cookies();
 
     // 设置 cookie
-    cookies().set('token', token, {
+    cookieStore.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/'
     });
 
-    cookies().set('user', JSON.stringify(user), {
+    cookieStore.set('user', JSON.stringify(user), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -56,10 +57,15 @@ export async function POST(request: Request) {
       }
     });
 
-  } catch (error: any) {
-    console.error('登录错误:', error);
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || '登录失败' },
+      { error: '登录失败' },
       { status: 400 }
     );
   }
