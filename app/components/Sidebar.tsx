@@ -25,7 +25,7 @@ import {
   Logout as LogoutIcon
 } from "@mui/icons-material"
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, redirect } from 'next/navigation'
 import { useUser } from '@/app/contexts/user'
 import { useState } from 'react'
 
@@ -34,22 +34,26 @@ const menuItems = [
   {
     path: '/dashboard/projects',
     label: '项目大厅',
-    icon: <DashboardIcon />
+    icon: <DashboardIcon />,
+    roles: ['admin', 'staff']  // 所有角色可见
   },
   {
     path: '/dashboard/my-projects',
     label: '我的项目',
-    icon: <MyProjectsIcon />
+    icon: <MyProjectsIcon />,
+    roles: ['admin', 'staff']  // 所有角色可见
   },
   {
     path: '/dashboard/all-projects',
     label: '全部项目',
-    icon: <AssignmentIcon />
+    icon: <AssignmentIcon />,
+    roles: ['admin']  // 仅管理员可见
   },
   {
     path: '/dashboard/users',
     label: '账号管理',
-    icon: <PeopleIcon />
+    icon: <PeopleIcon />,
+    roles: ['admin']  // 仅管理员可见
   }
 ]
 
@@ -63,6 +67,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const { user, clearUser } = useUser()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
+  // 根据用户角色过滤菜单项
+  const filteredMenuItems = menuItems.filter(item => 
+    item.roles.includes(user?.role || 'staff')
+  )
+
   const handleLogout = async () => {
     try {
       const res = await fetch('/api/logout', {
@@ -75,7 +84,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       clearUser()
       setLogoutDialogOpen(false)
-      router.push('/login')
+      // 重定向到登录页面
+      redirect('/login')
     } catch (error) {
       console.error('登出错误:', error)
     }
@@ -106,7 +116,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* 导航菜单 */}
       <List component="nav" sx={{ flex: 1, p: 2 }}>
-        {menuItems.map((item) => (
+        {filteredMenuItems.map((item) => (
           <ListItem key={item.path} disablePadding sx={{ mb: 1 }}>
             <ListItemButton
               onClick={() => handleMenuClick(item.path)}
