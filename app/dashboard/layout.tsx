@@ -1,203 +1,154 @@
 'use client'
 
-import { useEffect } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { 
-  Box, 
-  Avatar, 
-  Menu, 
-  MenuItem, 
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  Divider,
-  Paper
-} from "@mui/material"
-import { 
-  Dashboard as DashboardIcon,
-  People as PeopleIcon,
-  Assignment as AssignmentIcon,
-  AssignmentInd as MyProjectsIcon,
-  Logout as LogoutIcon,
-  Menu as MenuIcon
-} from "@mui/icons-material"
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Box, IconButton, useMediaQuery, useTheme, Drawer, Typography } from "@mui/material"
+import { Menu as MenuIcon } from '@mui/icons-material'
 import { useUser } from '@/app/contexts/user'
-import { useState } from 'react'
+import Sidebar from '@/app/components/Sidebar'
+import Breadcrumbs from '@/app/components/Breadcrumbs'
 
-// 定义菜单项
-const menuItems = [
-  {
-    path: '/dashboard/projects',
-    label: '项目大厅',
-    icon: <DashboardIcon />
-  },
-  {
-    path: '/dashboard/my-projects',
-    label: '我的项目',
-    icon: <MyProjectsIcon />
-  },
-  {
-    path: '/dashboard/all-projects',
-    label: '全部项目',
-    icon: <AssignmentIcon />
-  },
-  {
-    path: '/dashboard/users',
-    label: '账号管理',
-    icon: <PeopleIcon />
-  }
-]
+const DRAWER_WIDTH = 240
 
 export default function DashboardLayout({
   children
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
   const router = useRouter()
-  const { user, clearUser } = useUser()
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const { user } = useUser()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen)
+  }
 
   useEffect(() => {
-    // 如果没有用户信息，重定向到登录页
     if (!user) {
       router.push('/login')
     }
   }, [user, router])
 
-  // 如果没有用户信息，不渲染内容
-  if (!user) {
-    return null
-  }
-
-  const handleLogout = async () => {
-    try {
-      // 调用登出 API
-      const res = await fetch('/api/logout', {
-        method: 'POST'
-      })
-
-      if (!res.ok) {
-        throw new Error('登出失败')
-      }
-
-      // 清除本地状态
-      clearUser()
-      
-      // 关闭菜单
-      setAnchorEl(null)
-      
-      // 重定向到登录页
-      router.push('/login')
-    } catch (error) {
-      console.error('登出错误:', error)
-    }
-  }
+  if (!user) return null
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* 侧边栏 */}
-      <Paper
-        sx={{
-          width: 280,
-          borderRadius: 0,
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <Box sx={{ p: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+    <Box 
+      sx={{ 
+        display: 'flex',
+        minHeight: '100vh',
+        bgcolor: '#F5F5F5'
+      }}
+    >
+      {/* 移动端菜单按钮 */}
+      {isMobile && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '56px',
+            bgcolor: 'white',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            px: 2,
+            zIndex: 1100,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}
+        >
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="subtitle1" sx={{ ml: 2, fontWeight: 500 }}>
             投标管理系统
           </Typography>
         </Box>
-        
-        <Divider />
+      )}
 
-        <List component="nav" sx={{ flex: 1, px: 2 }}>
-          {menuItems.map((item) => (
-            <ListItem key={item.path} disablePadding>
-              <ListItemButton
-                component={Link}
-                href={item.path}
-                selected={pathname === item.path}
-                sx={{
-                  borderRadius: 1,
-                  mb: 0.5,
-                  '&.Mui-selected': {
-                    bgcolor: 'primary.light',
-                    color: 'primary.main',
-                    '& .MuiListItemIcon-root': {
-                      color: 'primary.main',
-                    },
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.label} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-
-        <Divider />
-
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1 }}>
-            <Avatar sx={{ bgcolor: 'primary.main' }}>
-              {user?.name?.[0]?.toUpperCase()}
-            </Avatar>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                {user?.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {user?.role === 'admin' ? '管理员' : '工作人员'}
-              </Typography>
-            </Box>
-            <IconButton
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              size="small"
-            >
-              <MenuIcon />
-            </IconButton>
-          </Box>
+      {/* 桌面端固定侧边栏 */}
+      {!isMobile && (
+        <Box 
+          component="aside"
+          sx={{ 
+            width: DRAWER_WIDTH,
+            flexShrink: 0,
+            position: 'fixed',
+            height: '100vh',
+            bgcolor: 'white',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 0 10px rgba(0,0,0,0.05)'
+          }}
+        >
+          <Sidebar onClose={() => {}} />
         </Box>
-      </Paper>
+      )}
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+      {/* 移动端抽屉式侧边栏 */}
+      {isMobile && (
+        <Drawer
+          variant="temporary"
+          anchor="left"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true // 为了更好的移动端性能
+          }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: DRAWER_WIDTH,
+              bgcolor: 'white',
+              boxShadow: '0 0 10px rgba(0,0,0,0.05)'
+            },
+          }}
+        >
+          <Sidebar onClose={handleDrawerToggle} />
+        </Drawer>
+      )}
+
+      {/* 主内容区域 */}
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1,
+          marginLeft: { xs: 0, md: `${DRAWER_WIDTH}px` },
+          minWidth: 0,
+          p: { xs: 2, md: 3 },
+          pt: { xs: '72px', md: 3 },
+          height: '100vh',
+          overflow: 'auto',
+          bgcolor: '#F5F5F5',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px'
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: 'rgba(0,0,0,0.2)'
+            }
+          }
         }}
       >
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          退出登录
-        </MenuItem>
-      </Menu>
-
-      {/* 主内容区 */}
-      <Box
-        sx={{ flex: 1, bgcolor: 'grey.50' }}
-      >
+        {/* 面包屑导航 */}
+        <Breadcrumbs />
+        
+        {/* 页面内容 */}
         {children}
       </Box>
     </Box>

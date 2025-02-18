@@ -1,12 +1,11 @@
 // 项目状态枚举
-export enum BidStatus {
-  PENDING = 'pending',           // 待接单
-  REGISTRATION = 'registration',    // 报名阶段
-  DEPOSIT = 'deposit',             // 保证金阶段
-  PREPARATION = 'preparation',     // 上传阶段
-  BIDDING = 'bidding',            // 报价阶段
-  COMPLETED = 'completed'          // 已完成
-}
+export type BidStatus = 
+  | 'pending'      // 待接单
+  | 'registration' // 报名阶段
+  | 'deposit'      // 保证金阶段
+  | 'preparation'  // 上传阶段
+  | 'bidding'      // 报价阶段
+  | 'completed'    // 已完成
 
 // 保证金方式枚举
 export enum DepositType {
@@ -50,39 +49,10 @@ export interface BiddingInfo {
 // 数据表定义
 export interface Tables {
   // 项目表
-  bid_projects: {
-    id: number;                    // 项目ID
-    name: string;                  // 项目名称
-    bidding_deadline: string;      // 开标时间
-    registration_deadline: string; // 报名截止时间
-    bid_user_bid_users?: number;   // 接单处理人ID,关联名称bid_user
-    
-    status: BidStatus;            // 项目状态
-    
-    registration_at: string;       // 操作报名时间
-    deposit_at: string;           // 上传保证金时间
-    preparation_at: string;       // 上传制作标书时间
-    bidding_at: string;           // 上传报价时间
-    // 各阶段信息,分开存储便于查询
-    registration_info: RegistrationInfo;    // 报名阶段信息(JSONB)
-    deposit_info: DepositInfo;             // 保证金阶段信息(JSONB)
-    preparation_info: PreparationInfo;     // 制作阶段信息(JSONB)
-    bidding_info: BiddingInfo;            // 报价阶段信息(JSONB)
-    
-    created_at: string;           // 创建时间
-    updated_at: string;           // 更新时间
-  };
+  bid_projects: Project;
 
   // 用户表
-  bid_users: {
-    id: number;                    // 用户ID
-    code: string;                  // 登录暗号
-    name: string;                  // 用户姓名
-    phone?: string;                // 手机号(用于短信通知)
-    role: 'admin' | 'staff';       // 角色(管理员/员工)
-    created_at: string;
-    updated_at: string;
-  };
+  bid_users: User;
 
   // 项目日志表
   bid_projects_logs: {
@@ -100,11 +70,42 @@ export interface Tables {
   // 通知记录表
   bid_notifications: {
     id: number;                    // 通知ID
-    notifacation_type: 'new_project' | 'status_change' | 'deadline_reminder';  // 通知类型
+    notification_type: 'new_project' | 'status_change' | 'deadline_reminder';  // 通知类型
     content: string;              // 通知内容
     phone: string;              // 手机号
     status: 'pending' | 'sent' | 'failed';  // 通知状态
     created_at: string;
     updated_at: string;
   };
+}
+export interface User {
+  id: number;                    // 用户ID
+  code: string;                  // 登录暗号
+  name: string;                  // 用户姓名
+  phone?: string;                // 手机号(用于短信通知)
+  role: 'admin' | 'staff';       // 角色(管理员/员工)
+  created_at: string;
+  updated_at: string;
+}
+export interface Project {
+  id: number;                    // 项目ID
+  name: string;                  // 项目名称
+  bidding_deadline: string;      // 开标时间
+  registration_deadline: string; // 报名截止时间
+  bid_user_bid_users?: number;   // 接单处理人ID,关联名称bid_user
+  
+  status: BidStatus;            // 项目状态
+  
+  registration_at: string;       // 操作报名时间
+  deposit_at: string;           // 上传保证金时间
+  preparation_at: string;       // 上传制作标书时间
+  bidding_at: string;           // 上传报价时间
+  // 各阶段信息,分开存储便于查询
+  registration_info: RegistrationInfo;    // 报名阶段信息(JSONB)
+  deposit_info: DepositInfo;             // 保证金阶段信息(JSONB)
+  preparation_info: PreparationInfo;     // 制作阶段信息(JSONB)
+  bidding_info: BiddingInfo;            // 报价阶段信息(JSONB)
+  
+  created_at: string;           // 创建时间
+  updated_at: string;           // 更新时间
 } 

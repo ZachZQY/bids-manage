@@ -4,6 +4,9 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { UserProvider } from './contexts/user'
 import { zhCN } from '@mui/material/locale'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import 'dayjs/locale/zh-cn'
 
 // 创建主题
 const theme = createTheme({
@@ -57,9 +60,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <UserProvider>
-        {children}
-      </UserProvider>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-cn">
+        <UserProvider>
+          {children}
+        </UserProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 } 

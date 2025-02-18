@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // 从 cookie 获取用户信息
     const cookieStore = await cookies()
     const userCookie = cookieStore.get('user')
-    
+
     if (!userCookie?.value) {
       return NextResponse.json(
         { error: '未登录' },
@@ -24,16 +24,15 @@ export async function GET(request: NextRequest) {
     const user = JSON.parse(userCookie.value)
 
     // 查询用户的项目
-    const { datas: projects, aggregate } = await db.find({
+    const { datas, aggregate } = await db.find({
       name: "bid_projects",
+      page_number: page,
+      page_size: pageSize,
       args: {
-        where: { 
-          bid_user_bid_users: { _eq: user.id },
-          _not: { status: { _eq: 'pending' } }
+        where: {
+          bid_user_bid_users: { _eq: user.id } // 指定给我的项目
         },
-        order_by: { registration_deadline: ()=>'desc' },
-        limit: pageSize,
-        offset: (page - 1) * pageSize
+        order_by: { registration_deadline: () => 'desc' }
       },
       fields: [
         "id",
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      projects,
+      projects: datas,
       total: aggregate?.count || 0,
       page,
       pageSize

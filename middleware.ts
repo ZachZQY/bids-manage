@@ -31,6 +31,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // 重定向 /dashboard 到项目大厅
+  if (pathname === '/dashboard') {
+    return NextResponse.redirect(new URL('/dashboard/projects', request.url));
+  }
+
   return NextResponse.next();
 }
 

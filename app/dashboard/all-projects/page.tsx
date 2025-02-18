@@ -1,21 +1,22 @@
 'use client'
 
 import { 
-  Paper,
-  Table, 
-  TableHead, 
-  TableBody, 
-  TableRow, 
-  TableCell,
-  TableContainer,
-  Button,
-  Chip,
   Box,
   Typography,
-  CircularProgress
+  Button,
+  CircularProgress,
+  Chip,
+  Paper,
+  Table,
+  TableContainer,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TablePagination
 } from "@mui/material"
-import { useEffect, useState } from "react"
-import Pagination from "@/app/components/Pagination"
+import { useEffect, useState, useCallback } from "react"
+import dayjs from "dayjs"
 import type { BidStatus } from "@/types/schema"
 
 interface Project {
@@ -24,53 +25,83 @@ interface Project {
   bidding_deadline: string
   registration_deadline: string
   status: BidStatus
+  bid_user?: {
+    id: number
+    name: string
+  }
 }
 
-interface PaginatedResponse {
-  projects: Project[]
-  total: number
-  page: number
-  pageSize: number
-  error?: string
+const STATUS_CONFIG: Record<BidStatus, { label: string, color: string, bgColor: string }> = {
+  pending: {
+    label: '待接单',
+    color: '#1976d2',
+    bgColor: '#E3F2FD'
+  },
+  registration: {
+    label: '报名阶段',
+    color: '#ed6c02',
+    bgColor: '#FFF3E0'
+  },
+  deposit: {
+    label: '保证金阶段',
+    color: '#2e7d32',
+    bgColor: '#E8F5E9'
+  },
+  preparation: {
+    label: '制作阶段',
+    color: '#9c27b0',
+    bgColor: '#F3E5F5'
+  },
+  bidding: {
+    label: '报价阶段',
+    color: '#0288d1',
+    bgColor: '#E1F5FE'
+  },
+  completed: {
+    label: '已完成',
+    color: '#757575',
+    bgColor: '#F5F5F5'
+  }
 }
-
-const statusMap = {
-  pending: { label: '待接单', color: 'info' },
-  registration: { label: '报名阶段', color: 'primary' },
-  deposit: { label: '保证金阶段', color: 'secondary' },
-  preparation: { label: '上传阶段', color: 'warning' },
-  bidding: { label: '报价阶段', color: 'error' },
-  completed: { label: '已完成', color: 'success' }
-} as const
 
 export default function AllProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(0)  // 从 0 开始
+  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [total, setTotal] = useState(0)
-  const pageSize = 10
 
-  useEffect(() => {
-    fetchProjects(page)
-  }, [page])
-
-  const fetchProjects = async (pageNum: number) => {
+  const fetchProjects = useCallback(async (pageNum: number) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/projects?page=${pageNum}&pageSize=${pageSize}`)
-      const data: PaginatedResponse = await res.json()
+      const res = await fetch(`/api/projects?page=${pageNum + 1}&pageSize=${rowsPerPage}`)
+      const data = await res.json()
       
       if (!res.ok) throw new Error(data.error)
       
       setProjects(data.projects)
       setTotal(data.total)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      console.error('获取项目失败:', err)
+      setError(err instanceof Error ? err.message : '获取项目列表失败')
     } finally {
       setLoading(false)
     }
+  }, [rowsPerPage])
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage)
   }
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(+event.target.value)
+    setPage(0)
+  }
+
+  useEffect(() => {
+    fetchProjects(page)
+  }, [page, fetchProjects])
 
   if (loading) {
     return (
@@ -81,83 +112,93 @@ export default function AllProjectsPage() {
   }
 
   return (
-    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Typography variant="h5" sx={{ fontWeight: 500 }}>
-        全部项目
-      </Typography>
-
+    <Box sx={{ 
+      height: 'calc(100% - 48px)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 3
+    }}>
+      {/* 错误提示 */}
       {error && (
         <Paper sx={{ p: 2, bgcolor: '#FEE2E2' }}>
           <Typography color="error">{error}</Typography>
         </Paper>
       )}
 
-      <div>
-        <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-          <Table>
+      {/* 表格区域 */}
+      <Paper sx={{ 
+        width: '100%', 
+        overflow: 'hidden', 
+        flex: 1
+      }}>
+        <TableContainer sx={{ maxHeight: "calc(100% - 52px)" }}>
+          <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>项目名称</TableCell>
-                <TableCell>开标时间</TableCell>
-                <TableCell>报名截止</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>操作</TableCell>
+                <TableCell style={{ minWidth: 200 }} sx={{ fontWeight: 600 }}>项目名称</TableCell>
+                <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>开标时间</TableCell>
+                <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>报名截止</TableCell>
+                <TableCell style={{ minWidth: 100 }} sx={{ fontWeight: 600 }}>状态</TableCell>
+                <TableCell style={{ minWidth: 120 }} sx={{ fontWeight: 600 }}>处理人</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {projects.map((project) => (
-                <TableRow key={project.id}>
+                <TableRow key={project.id} hover>
                   <TableCell>
-                    <Typography sx={{ fontWeight: 500 }}>
+                    <Typography sx={{ 
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
                       {project.name}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography color="text.secondary">
-                      {new Date(project.bidding_deadline).toLocaleString()}
+                      {dayjs(project.bidding_deadline).format('YYYY-MM-DD HH:mm')}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography color="text.secondary">
-                      {new Date(project.registration_deadline).toLocaleString()}
+                      {dayjs(project.registration_deadline).format('YYYY-MM-DD HH:mm')}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={statusMap[project.status].label}
-                      color={statusMap[project.status].color}
+                      label={STATUS_CONFIG[project.status].label}
                       size="small"
+                      sx={{ 
+                        color: STATUS_CONFIG[project.status].color,
+                        bgcolor: STATUS_CONFIG[project.status].bgColor,
+                        fontWeight: 500
+                      }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                    >
-                      查看详情
-                    </Button>
+                    <Typography color="text.secondary">
+                      {project.bid_user?.name || '-'}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          
-          {projects.length > 0 && (
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onChange={setPage}
-            />
-          )}
         </TableContainer>
 
-        {projects.length === 0 && !error && (
-          <Paper sx={{ p: 6, textAlign: 'center', bgcolor: '#F8F9FA' }}>
-            <Typography color="text.secondary">暂无项目数据</Typography>
-          </Paper>
-        )}
-      </div>
+        {/* 分页器 */}
+        <TablePagination
+          rowsPerPageOptions={[10, 20, 50]}
+          component="div"
+          count={total}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage="每页行数"
+        />
+      </Paper>
     </Box>
   )
 } 

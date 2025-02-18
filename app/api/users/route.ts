@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 export const dynamic = 'force-dynamic' // 强制动态渲染
 
@@ -8,18 +8,16 @@ export async function GET(request: NextRequest) {
     const page = Number(searchParams.get('page')) || 1
     const pageSize = Number(searchParams.get('pageSize')) || 10
     
-    // 计算偏移量
-    const offset = (page - 1) * pageSize
 
     // 获取分页数据
     const { datas,aggregate } = await db.find({
+      page_number: page,
+      page_size: pageSize,
       name: "bid_users",
       args: {
         order_by: {
           created_at: () => "desc"
-        },
-        limit: pageSize,
-        offset
+        }
       },
       fields: [
         "id",
