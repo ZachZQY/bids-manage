@@ -13,18 +13,21 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
-  Autocomplete
+  Autocomplete,
+  Stack
 } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dayjs, { Dayjs } from 'dayjs'
+import type { Company } from '@/types/schema'
 
 interface FormData {
   name: string
   bidUserId: string
   biddingDeadline: Dayjs
   registrationDeadline: Dayjs
+  bid_company_bid_companies: string
 }
 
 interface User {
@@ -37,7 +40,8 @@ const getInitialFormData = (): FormData => ({
   name: '',
   bidUserId: '',
   biddingDeadline: dayjs().add(7, 'day'),
-  registrationDeadline: dayjs().add(3, 'day')
+  registrationDeadline: dayjs().add(3, 'day'),
+  bid_company_bid_companies: ''
 })
 
 export default function CreateProjectPage() {
@@ -47,6 +51,7 @@ export default function CreateProjectPage() {
   const [formData, setFormData] = useState<FormData>(getInitialFormData())
   const [users, setUsers] = useState<User[]>([])
   const [showBidUser, setShowBidUser] = useState(false)
+  const [companies, setCompanies] = useState<Company[]>([])
 
   useEffect(() => {
     setFormData(getInitialFormData())
@@ -77,6 +82,21 @@ export default function CreateProjectPage() {
     }
 
     fetchUsers()
+  }, [])
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await fetch('/api/admin/companies?status=active')
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+        setCompanies(data.companies)
+      } catch (err) {
+        console.error('获取公司列表失败:', err)
+      }
+    }
+
+    fetchCompanies()
   }, [])
 
   const validateForm = (): string => {
@@ -131,7 +151,8 @@ export default function CreateProjectPage() {
           name: formData.name,
           bid_user_bid_users: showBidUser ? Number(formData.bidUserId) : undefined,
           bidding_deadline: formData.biddingDeadline.valueOf(),
-          registration_deadline: formData.registrationDeadline.valueOf()
+          registration_deadline: formData.registrationDeadline.valueOf(),
+          bid_company_bid_companies: formData.bid_company_bid_companies
         })
       })
 
@@ -337,7 +358,7 @@ export default function CreateProjectPage() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Stack spacing={3}>
             <TextField
               label="项目名称"
               value={formData.name}
@@ -451,6 +472,24 @@ export default function CreateProjectPage() {
 
             {renderUserSelect()}
 
+            <FormControl fullWidth required>
+              <InputLabel>所属公司</InputLabel>
+              <Select
+                value={formData.bid_company_bid_companies}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  bid_company_bid_companies: e.target.value 
+                }))}
+                label="所属公司"
+              >
+                {companies.map(company => (
+                  <MenuItem key={company.id} value={company.id}>
+                    {company.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             <Box sx={{
               display: 'flex',
               gap: 2,
@@ -487,7 +526,7 @@ export default function CreateProjectPage() {
                 {loading ? '发布中...' : '发布项目'}
               </Button>
             </Box>
-          </Box>
+          </Stack>
         </form>
       </Paper>
     </Box>

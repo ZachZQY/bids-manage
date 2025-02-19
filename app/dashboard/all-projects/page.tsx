@@ -168,6 +168,7 @@ export default function AllProjectsPage() {
             <TableHead>
               <TableRow>
                 <TableCell>项目名称</TableCell>
+                <TableCell>所属公司</TableCell>
                 <TableCell>开标时间</TableCell>
                 <TableCell>报名截止</TableCell>
                 <TableCell>状态</TableCell>
@@ -181,6 +182,11 @@ export default function AllProjectsPage() {
                   <TableCell>
                     <Typography sx={{ fontWeight: 500 }}>
                       {project.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography color="text.secondary">
+                      {project.bid_company?.name || '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>

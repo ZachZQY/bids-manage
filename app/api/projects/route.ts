@@ -41,6 +41,13 @@ export async function GET(request: NextRequest) {
             "name",
             "role"
           ]
+        },
+        {
+          name: "bid_company",
+          fields: [
+            "id",
+            "name"
+          ]
         }
       ],
       aggregate_fields: ["count"]
@@ -68,7 +75,8 @@ export async function POST(request: Request) {
       name,
       bidding_deadline,
       registration_deadline,
-      bid_user_bid_users
+      bid_user_bid_users,
+      bid_company_bid_companies
     } = body
     const user = await getUser()
     if(!user){
@@ -81,6 +89,7 @@ export async function POST(request: Request) {
           name,
           bidding_deadline,
           registration_deadline,
+          bid_company_bid_companies,
           ...bid_user_bid_users ? {
             bid_user_bid_users,
             status: 'registration' as BidStatus

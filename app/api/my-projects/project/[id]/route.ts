@@ -39,6 +39,13 @@ export async function GET(
         "deposit_at",
         "preparation_at",
         "bidding_at",
+        {
+          name: "bid_company",
+          fields: [
+            "id",
+            "name"
+          ]
+        },
         "created_at",
         "updated_at"
       ]

@@ -166,10 +166,11 @@ export default function MyProjectsPage() {
             <TableHead>
               <TableRow>
                 <TableCell style={{ minWidth: 200 }} sx={{ fontWeight: 600 }}>项目名称</TableCell>
+                <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>所属公司</TableCell>
                 <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>开标时间</TableCell>
                 <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>报名截止</TableCell>
-                <TableCell style={{ minWidth: 100 }} sx={{ fontWeight: 600 }}>状态</TableCell>
-                <TableCell style={{ minWidth: 100 }} sx={{ fontWeight: 600 }}>操作</TableCell>
+                <TableCell style={{ minWidth: 120 }} sx={{ fontWeight: 600 }}>状态</TableCell>
+                <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>操作</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -178,6 +179,11 @@ export default function MyProjectsPage() {
                   <TableCell>
                     <Typography sx={{ fontWeight: 500 }}>
                       {project.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography color="text.secondary">
+                      {project.bid_company?.name || '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>

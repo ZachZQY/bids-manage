@@ -34,6 +34,10 @@ interface Project {
   registration_deadline: number
   status: 'pending'
   bid_user_bid_users?: boolean
+  bid_company?: {
+    id: number
+    name: string
+  }
 }
 
 export default function ProjectsPage() {
@@ -195,6 +199,7 @@ export default function ProjectsPage() {
             <TableHead>
               <TableRow>
                 <TableCell style={{ minWidth: 200 }} sx={{ fontWeight: 600 }}>项目名称</TableCell>
+                <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>所属公司</TableCell>
                 <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>开标时间</TableCell>
                 <TableCell style={{ minWidth: 160 }} sx={{ fontWeight: 600 }}>报名截止</TableCell>
                 <TableCell style={{ minWidth: 100 }} sx={{ fontWeight: 600 }}>状态</TableCell>
@@ -212,6 +217,11 @@ export default function ProjectsPage() {
                       whiteSpace: 'nowrap'
                     }}>
                       {project.name}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography color="text.secondary">
+                      {project.bid_company?.name || '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>

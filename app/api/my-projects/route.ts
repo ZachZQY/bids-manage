@@ -64,6 +64,13 @@ export async function GET(request: NextRequest) {
         {
           name:"bid_user",
           fields:["id","name","phone","role"]
+        },
+        {
+          name: "bid_company",
+          fields: [
+            "id",
+            "name"
+          ]
         }
       ]
     })

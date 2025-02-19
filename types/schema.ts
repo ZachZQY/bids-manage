@@ -54,6 +54,9 @@ export interface Tables {
   // 用户表
   bid_users: User;
 
+  // 公司表
+  bid_companies: Company;
+
   // 项目日志表
   bid_projects_logs: {
     id: number;                    // 项目日志ID
@@ -110,9 +113,23 @@ export interface Project {
   
   created_at: string;           // 创建时间
   updated_at: string;           // 更新时间
+  bid_company_bid_companies?: number; // 关联公司ID,关联名称bid_company
   bid_user?: {
     id: number;
     name: string;
     phone: string;
   };
+  bid_company?: {
+    id: number;
+    name: string;
+    status: 'active' | 'inactive';
+  };
 } 
+
+export interface Company {
+  id: number;
+  name: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+}

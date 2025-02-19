@@ -103,6 +103,14 @@ export default function ProjectDetailPage() {
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
+                      所属公司
+                    </Typography>
+                    <Typography>
+                      {project.bid_company?.name || '-'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
                       开标时间
                     </Typography>
                     <Typography>

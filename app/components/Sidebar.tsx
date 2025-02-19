@@ -22,7 +22,9 @@ import {
   People as PeopleIcon,
   Assignment as AssignmentIcon,
   AssignmentInd as MyProjectsIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  History,
+  Business
 } from "@mui/icons-material"
 import Link from 'next/link'
 import { usePathname, useRouter, redirect } from 'next/navigation'
@@ -30,7 +32,7 @@ import { useUser } from '@/app/contexts/user'
 import { useState } from 'react'
 
 // 定义菜单项
-const menuItems = [
+const MENU_ITEMS = [
   {
     path: '/dashboard/projects',
     label: '项目大厅',
@@ -54,6 +56,18 @@ const menuItems = [
     label: '账号管理',
     icon: <PeopleIcon />,
     roles: ['admin']  // 仅管理员可见
+  },
+  {
+    label: '日志记录',
+    path: '/dashboard/logs',
+    icon: <History />,  // 从 @mui/icons-material 导入
+    roles: ['admin']    // 只有管理员可见
+  },
+  {
+    path: '/dashboard/companies',
+    label: '公司管理',
+    icon: <Business />,  // 从 @mui/icons-material 导入
+    roles: ['admin']  // 仅管理员可见
   }
 ]
 
@@ -68,7 +82,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   // 根据用户角色过滤菜单项
-  const filteredMenuItems = menuItems.filter(item =>
+  const filteredMenuItems = MENU_ITEMS.filter(item =>
     item.roles.includes(user?.role || 'staff')
   )
 
