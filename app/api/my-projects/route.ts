@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
+import type { BidStatus } from '@/types/schema'
 
 export const dynamic = 'force-dynamic' // 强制动态渲染
 
@@ -9,6 +10,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const page = Number(searchParams.get('page')) || 1
     const pageSize = Number(searchParams.get('pageSize')) || 10
+    const status = searchParams.get('status') as BidStatus | null
+    const needStats = searchParams.get('stats') === 'true'
 
     // 从 cookie 获取用户信息
     const cookieStore = await cookies()
@@ -23,15 +26,23 @@ export async function GET(request: NextRequest) {
 
     const user = JSON.parse(userCookie.value)
 
+    // 基础查询条件
+    const where = {
+      bid_user_bid_users: { _eq: user.id }
+    }
+
+    // 如果指定了状态，添加状态过滤
+    if (status) {
+      where['status'] = { _eq: status }
+    }
+
     // 查询用户的项目
     const { datas, aggregate } = await db.find({
       name: "bid_projects",
       page_number: page,
       page_size: pageSize,
       args: {
-        where: {
-          bid_user_bid_users: { _eq: user.id } // 指定给我的项目
-        },
+        where,
         order_by: { registration_deadline: () => 'desc' }
       },
       fields: [
@@ -39,15 +50,90 @@ export async function GET(request: NextRequest) {
         "name",
         "bidding_deadline",
         "registration_deadline",
-        "status"
+        "status",
+        "registration_info",
+        "deposit_info",
+        "preparation_info",
+        "bidding_info",
+        "registration_at",
+        "deposit_at",
+        "preparation_at",
+        "bidding_at",
+        "created_at",
+        "updated_at",
+        {
+          name:"bid_user",
+          fields:["id","name","phone","role"]
+        }
       ]
     })
+
+    // 如果需要统计数据，额外查询各状态数量
+    let stats:unknown = null
+    if (needStats) {
+
+  
+      const {response} = await db.operate({
+        opMethod: "query",
+        opFields:[{
+          alias:"registration",
+          name:"bid_projects_aggregate",
+          fields:{name:"aggregate",fields:["count"]},
+          args:{
+            where:{bid_user_bid_users:{_eq:user.id},status:{_eq:"registration"}}
+          }
+        },{
+          alias:"deposit",
+          name:"bid_projects_aggregate",
+          fields:{name:"aggregate",fields:["count"]},
+          args:{
+            where:{bid_user_bid_users:{_eq:user.id},status:{_eq:"deposit"}}
+          }
+        },
+        {
+          alias:"preparation",
+          name:"bid_projects_aggregate",
+          fields:{name:"aggregate",fields:["count"]},
+          args:{
+            where:{bid_user_bid_users:{_eq:user.id},status:{_eq:"preparation"}}
+          }
+        },
+        
+        {
+          alias:"bidding",
+          name:"bid_projects_aggregate",
+          fields:{name:"aggregate",fields:["count"]},
+          args:{
+            where:{bid_user_bid_users:{_eq:user.id},status:{_eq:"bidding"}}
+          }
+        },
+        {
+          alias:"completed",
+          name:"bid_projects_aggregate",
+          fields:{name:"aggregate",fields:["count"]},
+          args:{
+            where:{bid_user_bid_users:{_eq:user.id},status:{_eq:"completed"}}
+          }
+        }
+      
+      ]
+      })
+      stats = {
+        registration: response.registration.aggregate.count,
+        deposit: response.deposit.aggregate.count,
+        preparation: response.preparation.aggregate.count,
+        bidding: response.bidding.aggregate.count,
+        completed: response.completed.aggregate.count
+      }
+
+    }
 
     return NextResponse.json({
       projects: datas,
       total: aggregate?.count || 0,
       page,
-      pageSize
+      pageSize,
+      ...stats?stats:{}
     })
 
   } catch (error) {

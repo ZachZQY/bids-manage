@@ -21,6 +21,8 @@ import { useEffect, useState, useCallback } from "react"
 import { useUser } from "@/app/contexts/user"
 import dayjs from "dayjs"
 import type { Project, BidStatus } from "@/types/schema"
+import { ArrowForward } from '@mui/icons-material'
+import { useRouter } from "next/navigation"
 
 // 修改状态配置的类型
 const STATUS_CONFIG: Record<BidStatus, {
@@ -72,20 +74,36 @@ export default function MyProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [page, setPage] = useState(0)  // 注意: TablePagination 的页码从 0 开始
+  const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const router = useRouter()
+  const [statusCounts, setStatusCounts] = useState({
+    registration: 0,
+    deposit: 0,
+    preparation: 0,
+    bidding: 0,
+    completed: 0
+  })
 
   const fetchProjects = useCallback(async (pageNum: number) => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/my-projects?page=${pageNum + 1}&pageSize=${rowsPerPage}`)
+      const res = await fetch(`/api/my-projects?page=${pageNum + 1}&pageSize=${rowsPerPage}&stats=true`)
       const data = await res.json()
       
       if (!res.ok) throw new Error(data.error)
       
       setProjects(data.projects)
       setTotal(data.total)
+      // 使用接口返回的统计数据
+      setStatusCounts({
+        registration: data.registration || 0,
+        deposit: data.deposit || 0,
+        preparation: data.preparation || 0,
+        bidding: data.bidding || 0,
+        completed: data.completed || 0
+      })
     } catch (err) {
       console.error('获取项目失败:', err)
       setError(err instanceof Error ? err.message : '获取项目列表失败')
@@ -103,25 +121,16 @@ export default function MyProjectsPage() {
   }
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value)
+    setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
   }
 
   if (loading) {
     return (
-      <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
       </Box>
     )
-  }
-
-  // 计算各阶段项目数量
-  const statusCounts = {
-    registration: projects.filter(p => p.status === 'registration').length,
-    deposit: projects.filter(p => p.status === 'deposit').length,
-    preparation: projects.filter(p => p.status === 'preparation').length,
-    bidding: projects.filter(p => p.status === 'bidding').length,
-    completed: projects.filter(p => p.status === 'completed').length,
   }
 
   return (
@@ -135,38 +144,51 @@ export default function MyProjectsPage() {
       <Box sx={{ 
         display: 'grid',
         gridTemplateColumns: { 
-          xs: 'repeat(2, 1fr)',  // 移动端两列
-          sm: 'repeat(3, 1fr)',  // 平板三列
-          md: 'repeat(5, 1fr)'   // 桌面端五列
+          xs: 'repeat(2, 1fr)',
+          sm: 'repeat(3, 1fr)',
+          md: 'repeat(5, 1fr)'
         },
         gap: 2
       }}>
-        {Object.entries(STATUS_CONFIG).filter(([status, config]) => status !== 'pending').map(([status, config]) => (
-          <Card 
-            key={status}
-            sx={{ 
-              background: config.gradient,
-              minWidth: { xs: '140px', sm: '160px' }
-            }}
-          >
-            <CardContent>
-              <Typography sx={{ opacity: 0.8 }} color="white" variant="body2">
-                {config.label}
-              </Typography>
-              <Typography 
-                color="white" 
-                variant="h4" 
-                sx={{ 
-                  mt: 1, 
-                  fontWeight: 'bold',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-                }}
-              >
-                {statusCounts[status as keyof typeof statusCounts]}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
+        {Object.entries(STATUS_CONFIG)
+          .filter(([status]) => status !== 'pending')
+          .map(([status, config]) => (
+            <Card key={status} sx={{ background: config.gradient }}>
+              <CardContent>
+                <Typography sx={{ opacity: 0.8 }} color="white" variant="body2">
+                  {config.label}
+                </Typography>
+                <Typography 
+                  color="white" 
+                  variant="h4" 
+                  sx={{ 
+                    mt: 1, 
+                    fontWeight: 'bold',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {statusCounts[status as keyof typeof statusCounts]}
+                </Typography>
+                <Button
+                  variant="text"
+                  size="small"
+                  endIcon={<ArrowForward />}
+                  onClick={() => router.push(`/dashboard/my-projects/status/${status}`)}
+                  sx={{
+                    color: 'white',
+                    mt: 2,
+                    opacity: 0.9,
+                    '&:hover': {
+                      opacity: 1,
+                      bgcolor: 'rgba(255,255,255,0.1)'
+                    }
+                  }}
+                >
+                  查看详情
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
       </Box>
 
       {/* 错误提示 */}

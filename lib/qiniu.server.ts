@@ -9,6 +9,7 @@ const config = {
 // 创建鉴权对象
 const mac = new qiniu.auth.digest.Mac(config.accessKey, config.secretKey);
 
+
 // 获取上传凭证
 export function getUploadToken(key: string) {
   const putPolicy = new qiniu.rs.PutPolicy({

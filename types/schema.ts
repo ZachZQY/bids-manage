@@ -36,14 +36,14 @@ export interface PreparationInfo {
   network: string;    // 网络信息，用户填入
   mac_address?: string;    // 上传标书中的mac地址
   ip_address?: string;    // 上传标书中的ip地址
-  images_url?: string[];    // 上传图片URL,多个图片
-  documents_url?: string[];       // 标书文件URL,多个文件
+  images_path?: string[];    // 上传图片路径,多个图片
+  documents_path?: string[];       // 标书文件路径,多个文件
 }
 
 // 报价阶段信息(制作标书完成后进入报价阶段,报价完成后项目就结束了)
 export interface BiddingInfo {
-    images_url?: string[];    // 上传图片URL,多个图片
-    documents_url?: string[];       // 标书文件URL,多个文件
+    images_path?: string[];    // 上传图片URL,多个图片
+    documents_path?: string[];       // 标书文件路径,多个文件
 }
 
 // 数据表定义
@@ -63,6 +63,7 @@ export interface Tables {
     user_agent: string;              // 操作人浏览器信息
     action_type:"registration" | "deposit" | "preparation" | "bidding";              // 操作类型
     action_info:RegistrationInfo | DepositInfo | PreparationInfo | BiddingInfo;              // 操作信息
+    content:string;//日志内容
     created_at: string;
     updated_at: string;
   };

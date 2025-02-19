@@ -4,6 +4,9 @@ const config = {
 
 // 获取文件完整URL
 export function getFileUrl(key: string) {
+  if (!key) return '';
+  // 如果已经是完整URL则直接返回
+  if (key.startsWith('http')) return key;
   return `${config.domain}/${key}`;
 }
 

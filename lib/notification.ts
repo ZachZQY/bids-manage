@@ -1,5 +1,6 @@
 import { db } from '@/lib/db'
-
+import { sendSMS } from '@/lib/sms'
+import dayjs from 'dayjs'
 export type NotificationType = 'new_project' | 'status_change' | 'deadline_reminder'
 
 interface Project {
@@ -29,15 +30,15 @@ export async function sendNotification(options: NotificationOptions) {
   let content = ''
   switch (type) {
     case 'new_project':
-      content = `您有一个新的指定项目: ${project.name},截止时间:${project.registration_deadline},请及时处理！`
+      content = `【消息中心】您有一个新的标书项目 ${project.name} 请及时提交报名信息！`
       break
     case 'status_change':
-      content = `项目 ${project.name} 状态已更新为: ${project.status}`
+      content = `【消息中心】您的标书项目 ${project.name} 进度已更新！`
       break
     case 'deadline_reminder':
       const deadline = project.status === 'registration' ? 
         project.registration_deadline : project.bidding_deadline
-      content = `提醒：项目 ${project.name} 将在 ${deadline} 截止，请及时处理！`
+      content = `【消息中心】您的标书项目 ${project.name} 将在 ${dayjs(deadline).format('YYYY-MM-DD HH:mm')} 截止提交报名信息，请及时处理！`
       break
   }
 
@@ -52,8 +53,15 @@ export async function sendNotification(options: NotificationOptions) {
           status: 'pending',
         }]
       },
-      returning_fields: ["id"]
+      returning_fields: ["id","content"]
     })
+
+    const result = await sendSMS({
+      mobile: user.phone,
+      content: notification.content
+    })
+
+    console.log(result,1234)
     
     return notification
   } catch (error) {

@@ -1,8 +1,8 @@
 'use client'
 
-import { 
-  Box, 
-  Avatar, 
+import {
+  Box,
+  Avatar,
   IconButton,
   List,
   ListItem,
@@ -17,7 +17,7 @@ import {
   DialogActions,
   DialogContentText
 } from "@mui/material"
-import { 
+import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Assignment as AssignmentIcon,
@@ -68,7 +68,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   // 根据用户角色过滤菜单项
-  const filteredMenuItems = menuItems.filter(item => 
+  const filteredMenuItems = menuItems.filter(item =>
     item.roles.includes(user?.role || 'staff')
   )
 
@@ -84,11 +84,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       clearUser()
       setLogoutDialogOpen(false)
-      // 重定向到登录页面
-      redirect('/login')
     } catch (error) {
       console.error('登出错误:', error)
     }
+    // 重定向到登录页面
+    redirect('/login')
   }
 
   const handleMenuClick = (path: string) => {
@@ -99,14 +99,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 标题区域 */}
-      <Box sx={{ 
+      <Box sx={{
         p: 3,
         borderBottom: '1px solid',
         borderColor: 'divider',
         background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
         color: 'white'
       }}>
-        <Typography variant="h6" sx={{ 
+        <Typography variant="h6" sx={{
           fontWeight: 'bold',
           letterSpacing: 0.5
         }}>
@@ -121,7 +121,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             <ListItemButton
               onClick={() => handleMenuClick(item.path)}
               selected={pathname === item.path}
-              sx={{ 
+              sx={{
                 borderRadius: 1,
                 '&.Mui-selected': {
                   bgcolor: '#E3F2FD',
@@ -141,8 +141,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText 
-                primary={item.label} 
+              <ListItemText
+                primary={item.label}
                 primaryTypographyProps={{
                   fontSize: '0.9rem',
                   fontWeight: pathname === item.path ? 600 : 400
@@ -154,21 +154,21 @@ export default function Sidebar({ onClose }: SidebarProps) {
       </List>
 
       {/* 用户信息和退出按钮 */}
-      <Box sx={{ 
+      <Box sx={{
         p: 2,
         borderTop: '1px solid',
         borderColor: 'divider',
         bgcolor: '#FAFAFA'
       }}>
         {/* 用户信息 */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
           gap: 2,
           p: 1,
           mb: 2
         }}>
-          <Avatar sx={{ 
+          <Avatar sx={{
             bgcolor: 'primary.main',
             width: 40,
             height: 40
@@ -176,7 +176,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             {user?.name?.[0]?.toUpperCase()}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" sx={{ 
+            <Typography variant="subtitle2" sx={{
               fontWeight: 600,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -218,14 +218,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
           }
         }}
       >
-        <DialogTitle sx={{ 
+        <DialogTitle sx={{
           pb: 1,
           fontSize: '1.25rem'
         }}>
           退出登录
         </DialogTitle>
         <DialogContent sx={{ pb: 3 }}>
-          <DialogContentText sx={{ 
+          <DialogContentText sx={{
             color: 'text.primary',
             fontSize: '1rem',
             mt: 1
@@ -233,12 +233,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
             您确定要退出登录吗？退出后需要重新登录才能继续使用系统。
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ 
-          px: 3, 
+        <DialogActions sx={{
+          px: 3,
           pb: 3,
           gap: 1
         }}>
-          <Button 
+          <Button
             onClick={() => setLogoutDialogOpen(false)}
             variant="outlined"
             color="inherit"
@@ -249,7 +249,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           >
             取消
           </Button>
-          <Button 
+          <Button
             onClick={handleLogout}
             variant="contained"
             color="error"
