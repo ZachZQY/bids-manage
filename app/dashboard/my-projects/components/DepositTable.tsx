@@ -9,6 +9,7 @@ import {
 } from '@mui/material'
 import dayjs from 'dayjs'
 import type { Project } from '@/types/schema'
+import { STATUS_CONFIG } from '../../config'
 
 export default function DepositTable() {
   const router = useRouter()
@@ -91,17 +92,26 @@ export default function DepositTable() {
                   </Stack>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/deposit`)}
-                    sx={{
-                      background: 'linear-gradient(45deg, #0288d1 30%, #0277bd 90%)',
-                      minWidth: 100
-                    }}
-                  >
-                    上传保证金
-                  </Button>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/${STATUS_CONFIG[project.status].actions?.primary?.path}`)}
+                      sx={{
+                        background: STATUS_CONFIG[project.status].gradient
+                      }}
+                    >
+                      {STATUS_CONFIG[project.status].actions?.primary?.label}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/detail`)}
+                      sx={{ minWidth: 80 }}
+                    >
+                      详情
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}

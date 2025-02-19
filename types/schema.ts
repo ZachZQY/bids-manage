@@ -24,13 +24,13 @@ export interface RegistrationInfo {
   images_path?: string[];      // 报名图片路径
 }
 
-// 保证金阶段(报名后进入保证金阶段,下一步是上传保证金信息)
+// 保证金阶段(报名后进入保证金阶段,下一步是提交保证金信息)
 export interface DepositInfo {
   type: DepositType;        // 保证金方式
   images_path?: string[];      // 保证金图片路径
 }
 
-// 制作阶段信息(保证金上传后进入制作阶段,下一步是上传标书信息)
+// 上传阶段信息(保证金提交后进入上传阶段,下一步是提交上传标书信息)
 export interface PreparationInfo {
   computer: string;    // 电脑信息，用户填入
   network: string;    // 网络信息，用户填入
@@ -85,6 +85,7 @@ export interface User {
   name: string;                  // 用户姓名
   phone?: string;                // 手机号(用于短信通知)
   role: 'admin' | 'staff';       // 角色(管理员/员工)
+  status: 'active' | 'inactive'; // 状态(启用/禁用)
   created_at: string;
   updated_at: string;
 }
@@ -109,4 +110,9 @@ export interface Project {
   
   created_at: string;           // 创建时间
   updated_at: string;           // 更新时间
+  bid_user?: {
+    id: number;
+    name: string;
+    phone: string;
+  };
 } 

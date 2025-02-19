@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
-import { STATUS_CONFIG } from '../../config'
+import { STATUS_CONFIG } from '../../../config'
 import RegistrationTable from '../../components/RegistrationTable'
 import DepositTable from '../../components/DepositTable'
 import PreparationTable from '../../components/PreparationTable'

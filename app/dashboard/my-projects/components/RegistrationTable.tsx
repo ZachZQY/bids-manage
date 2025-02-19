@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'next/navigation'
 import dayjs from 'dayjs'
 import type { Project } from '@/types/schema'
+import { STATUS_CONFIG } from '../../config'
 
 export default function RegistrationTable() {
   const router = useRouter()
@@ -127,23 +128,22 @@ export default function RegistrationTable() {
                     <Button
                       variant="contained"
                       size="small"
-                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/registration`)}
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/${STATUS_CONFIG[project.status].actions?.primary?.path}`)}
                       sx={{
-                        background: 'linear-gradient(45deg, #ed6c02 30%, #e65100 90%)',
+                        background: STATUS_CONFIG[project.status].gradient
                       }}
                     >
-                      {project.registration_info ? '修改报名' : '提交报名'}
+                      {project.registration_info 
+                        ? STATUS_CONFIG[project.status].actions?.primary?.modifyLabel 
+                        : STATUS_CONFIG[project.status].actions?.primary?.label}
                     </Button>
                     <Button
                       variant="outlined"
                       size="small"
-                      color="error"
-                      onClick={() => {
-                        setCancellingProject(project)
-                        setCancelDialog(true)
-                      }}
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/detail`)}
+                      sx={{ minWidth: 80 }}
                     >
-                      撤单
+                      详情
                     </Button>
                   </Stack>
                 </TableCell>

@@ -25,6 +25,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useUser } from "@/app/contexts/user"
 import dayjs from "dayjs"
 import { useRouter } from 'next/navigation'
+import { STATUS_CONFIG } from '../config'
 
 interface Project {
   id: number
@@ -33,15 +34,6 @@ interface Project {
   registration_deadline: number
   status: 'pending'
   bid_user_bid_users?: boolean
-}
-
-// 添加状态配置
-const STATUS_CONFIG = {
-  pending: {
-    label: '待接单',
-    color: '#1976d2',
-    bgColor: '#E3F2FD'
-  }
 }
 
 export default function ProjectsPage() {

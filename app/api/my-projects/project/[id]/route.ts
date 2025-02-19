@@ -23,7 +23,6 @@ export async function GET(
           id: {
             _eq:Number(paramsData.id)
           },
-          bid_user_bid_users: { _eq: user.id }
         }
       },
       fields: [

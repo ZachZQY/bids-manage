@@ -15,7 +15,8 @@ import {
   TableCell,
   TablePagination,
   Card,
-  CardContent
+  CardContent,
+  Stack
 } from "@mui/material"
 import { useEffect, useState, useCallback } from "react"
 import { useUser } from "@/app/contexts/user"
@@ -23,51 +24,7 @@ import dayjs from "dayjs"
 import type { Project, BidStatus } from "@/types/schema"
 import { ArrowForward } from '@mui/icons-material'
 import { useRouter } from "next/navigation"
-
-// 修改状态配置的类型
-const STATUS_CONFIG: Record<BidStatus, {
-  label: string
-  color: string
-  bgColor: string
-  gradient: string
-}> = {
-  pending: {
-    label: '待接单',
-    color: '#1976d2',
-    bgColor: '#E3F2FD',
-    gradient: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)'
-  },
-  registration: {
-    label: '报名阶段',
-    color: '#ed6c02',
-    bgColor: '#FFF3E0',
-    gradient: 'linear-gradient(45deg, #ed6c02 30%, #e65100 90%)'
-  },
-  deposit: {
-    label: '保证金阶段',
-    color: '#2e7d32',
-    bgColor: '#E8F5E9',
-    gradient: 'linear-gradient(45deg, #2e7d32 30%, #1b5e20 90%)'
-  },
-  preparation: {
-    label: '上传阶段',
-    color: '#9c27b0',
-    bgColor: '#F3E5F5',
-    gradient: 'linear-gradient(45deg, #9c27b0 30%, #7b1fa2 90%)'
-  },
-  bidding: {
-    label: '报价阶段',
-    color: '#0288d1',
-    bgColor: '#E1F5FE',
-    gradient: 'linear-gradient(45deg, #0288d1 30%, #0277bd 90%)'
-  },
-  completed: {
-    label: '已完成',
-    color: '#757575',
-    bgColor: '#F5F5F5',
-    gradient: 'linear-gradient(45deg, #757575 30%, #616161 90%)'
-  }
-}
+import { STATUS_CONFIG } from '../config'
 
 export default function MyProjectsPage() {
   const { user } = useUser()
@@ -245,22 +202,40 @@ export default function MyProjectsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      color="primary"
-                      sx={{
-                        minWidth: 80,
-                        color: STATUS_CONFIG[project.status].color,
-                        borderColor: STATUS_CONFIG[project.status].color,
-                        '&:hover': {
-                          borderColor: STATUS_CONFIG[project.status].color,
-                          backgroundColor: `${STATUS_CONFIG[project.status].bgColor}33`
-                        }
-                      }}
-                    >
-                      查看详情
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      {STATUS_CONFIG[project.status].actions?.primary && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/${STATUS_CONFIG[project.status].actions?.primary?.path}`)}
+                          sx={{
+                            background: STATUS_CONFIG[project.status].gradient
+                          }}
+                        >
+                          {project.status === 'registration' && project.registration_info 
+                            ? STATUS_CONFIG[project.status].actions?.primary?.modifyLabel 
+                            : STATUS_CONFIG[project.status].actions?.primary?.label}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/detail`)}
+                        sx={{ 
+                          minWidth: 80,
+                          ...(project.status === 'completed' && {
+                            color: '#757575',
+                            borderColor: '#757575',
+                            '&:hover': {
+                              borderColor: '#616161',
+                              backgroundColor: 'rgba(117, 117, 117, 0.04)'
+                            }
+                          })
+                        }}
+                      >
+                        详情
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}

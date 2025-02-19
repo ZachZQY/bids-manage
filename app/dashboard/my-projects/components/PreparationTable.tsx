@@ -1,15 +1,27 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, Box, Typography, Button, CircularProgress,
-  TextField, Stack
+  Stack, Chip
 } from '@mui/material'
 import dayjs from 'dayjs'
 import type { Project } from '@/types/schema'
+import { DepositType } from '@/types/schema'
+import { STATUS_CONFIG } from '../../config'
+
+// 保证金方式显示配置
+const DEPOSIT_TYPE_CONFIG = {
+  [DepositType.INSURANCE]: { label: '保证金保险', color: '#1976d2' },
+  [DepositType.BANK_GUARANTEE]: { label: '银行保函', color: '#2e7d32' },
+  [DepositType.TRANSFER]: { label: '网银汇款', color: '#ed6c02' },
+  [DepositType.NONE]: { label: '不收取保证金', color: '#757575' }
+}
 
 export default function PreparationTable() {
+  const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -53,10 +65,13 @@ export default function PreparationTable() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell>项目名称</TableCell>
-              <TableCell>开标时间</TableCell>
-              <TableCell>电脑信息</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell width="20%">项目名称</TableCell>
+              <TableCell width="15%">开标时间</TableCell>
+              <TableCell width="15%">截止时间</TableCell>
+              <TableCell width="15%">报名电脑</TableCell>
+              <TableCell width="15%">报名网络</TableCell>
+              <TableCell width="10%">保证金方式</TableCell>
+              <TableCell width="10%">操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -73,32 +88,54 @@ export default function PreparationTable() {
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <Stack spacing={1}>
-                    <TextField
-                      size="small"
-                      label="MAC地址"
-                      value={project.preparation_info?.mac_address || ''}
-                      onChange={() => {/* 处理MAC地址变更 */}}
-                    />
-                    <TextField
-                      size="small"
-                      label="IP地址"
-                      value={project.preparation_info?.ip_address || ''}
-                      onChange={() => {/* 处理IP地址变更 */}}
-                    />
-                  </Stack>
+                  <Typography color="text.secondary">
+                    {dayjs(project.registration_deadline).format('YYYY-MM-DD HH:mm')}
+                  </Typography>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      background: 'linear-gradient(45deg, #9c27b0 30%, #7b1fa2 90%)',
-                      minWidth: 100
-                    }}
-                  >
-                    上传标书
-                  </Button>
+                  <Typography color="text.secondary">
+                    {project.registration_info?.computer || '-'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography color="text.secondary">
+                    {project.registration_info?.network || '-'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  {project.deposit_info?.type && (
+                    <Chip
+                      label={DEPOSIT_TYPE_CONFIG[project.deposit_info.type].label}
+                      size="small"
+                      sx={{
+                        color: DEPOSIT_TYPE_CONFIG[project.deposit_info.type].color,
+                        bgcolor: 'rgba(0, 0, 0, 0.08)',
+                        fontWeight: 500
+                      }}
+                    />
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/${STATUS_CONFIG[project.status].actions?.primary?.path}`)}
+                      sx={{
+                        background: STATUS_CONFIG[project.status].gradient
+                      }}
+                    >
+                      {STATUS_CONFIG[project.status].actions?.primary?.label}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => router.push(`/dashboard/my-projects/project/${project.id}/detail`)}
+                      sx={{ minWidth: 80 }}
+                    >
+                      详情
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
