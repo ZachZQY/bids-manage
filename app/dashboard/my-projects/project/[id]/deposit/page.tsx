@@ -90,14 +90,6 @@ export default function ProjectDepositPage() {
       setSubmitting(true)
       setError('')
 
-      if (depositInfo.type === DepositType.NONE) {
-        throw new Error('请选择保证金方式')
-      }
-
-      if (!depositInfo.images_path?.length) {
-        throw new Error('请上传保证金凭证')
-      }
-
       const res = await fetch(`/api/my-projects/project/${params.id}/deposit`, {
         method: 'POST',
         headers: {

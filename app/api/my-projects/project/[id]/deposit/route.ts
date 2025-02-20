@@ -20,21 +20,6 @@ export async function POST(
     }
 
     const depositInfo: DepositInfo = await request.json()
-    
-    // 验证必填信息
-    if (!depositInfo.type || depositInfo.type === 'none') {
-      return NextResponse.json(
-        { error: '请选择保证金方式' },
-        { status: 400 }
-      )
-    }
-
-    if (!depositInfo.images_path?.length) {
-      return NextResponse.json(
-        { error: '请上传保证金凭证' },
-        { status: 400 }
-      )
-    }
 
     // 更新项目保证金信息
     const project = await db.mutationGetFirstOne({

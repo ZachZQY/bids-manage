@@ -17,7 +17,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton
+  IconButton,
+  Skeleton
 } from '@mui/material'
 import { ArrowBack, Close, Download } from '@mui/icons-material'
 import type { Project } from '@/types/schema'
@@ -26,6 +27,7 @@ import { getFileUrl } from '@/lib/qiniu'
 import dayjs from 'dayjs'
 import React from 'react'
 import { STATUS_CONFIG } from '../../../../config'  // 使用相对路径导入
+import { getFileInfo } from '@/lib/file'
 
 // 保证金方式显示配置
 const DEPOSIT_TYPE_CONFIG = {
@@ -34,6 +36,18 @@ const DEPOSIT_TYPE_CONFIG = {
   [DepositType.TRANSFER]: { label: '网银汇款', color: '#ed6c02' },
   [DepositType.NONE]: { label: '不收取保证金', color: '#757575' }
 }
+
+// 添加时间显示组件
+const TimeDisplay = ({ label, time }: { label: string, time: string }) => (
+  <Box>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography>
+      {dayjs(time).format('YYYY-MM-DD HH:mm')}
+    </Typography>
+  </Box>
+)
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -44,6 +58,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [cancelDialog, setCancelDialog] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [imageLoading, setImageLoading] = useState<Record<string, boolean>>({})
 
   // 获取项目详情
   useEffect(() => {
@@ -68,8 +83,17 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
+      <Box sx={{ p: 3 }}>
+        <Stack spacing={3}>
+          <Skeleton variant="rectangular" height={48} />
+          <Paper sx={{ p: 3 }}>
+            <Stack spacing={2}>
+              <Skeleton variant="text" width="30%" />
+              <Skeleton variant="rectangular" height={100} />
+              <Skeleton variant="rectangular" height={100} />
+            </Stack>
+          </Paper>
+        </Stack>
       </Box>
     )
   }
@@ -109,22 +133,8 @@ export default function ProjectDetailPage() {
                       {project.bid_company?.name || '-'}
                     </Typography>
                   </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      开标时间
-                    </Typography>
-                    <Typography>
-                      {dayjs(project.bidding_deadline).format('YYYY-MM-DD HH:mm')}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      截止时间
-                    </Typography>
-                    <Typography>
-                      {dayjs(project.registration_deadline).format('YYYY-MM-DD HH:mm')}
-                    </Typography>
-                  </Box>
+                  <TimeDisplay label="开标时间" time={project.bidding_deadline} />
+                  <TimeDisplay label="报名截止" time={project.registration_deadline} />
                 </Stack>
               </Grid>
               <Grid item xs={12} md={6}>
@@ -190,25 +200,7 @@ export default function ProjectDetailPage() {
                   </Typography>
                   <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                     {project.registration_info?.images_path?.map((path, index) => (
-                      <Paper
-                        key={path}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getFileUrl(path)}
-                          alt={`报名截图 ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </Paper>
+                      renderImage(path, `报名截图 ${index + 1}`)
                     ))}
                   </Stack>
                 </Box>
@@ -245,29 +237,11 @@ export default function ProjectDetailPage() {
               <Grid item xs={12} md={6}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    保证金凭证
+                    保证金截图
                   </Typography>
                   <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                     {project.deposit_info?.images_path?.map((path, index) => (
-                      <Paper
-                        key={path}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getFileUrl(path)}
-                          alt={`保证金凭证 ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </Paper>
+                      renderImage(path, `保证金截图 ${index + 1}`)
                     ))}
                   </Stack>
                 </Box>
@@ -277,7 +251,7 @@ export default function ProjectDetailPage() {
         )
       },
       {
-        title: '制作信息',
+        title: '上传信息',
         show: project.preparation_info !== null,
         content: (
           <Box>
@@ -299,34 +273,28 @@ export default function ProjectDetailPage() {
                 </Stack>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    制作截图
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                    {project.preparation_info?.images_path?.map((path, index) => (
-                      <Paper
-                        key={path}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getFileUrl(path)}
-                          alt={`制作截图 ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </Paper>
-                    ))}
-                  </Stack>
-                </Box>
+                <Stack spacing={2}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      上传截图
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                      {project.preparation_info?.images_path?.map((path, index) => (
+                        renderImage(path, `上传截图 ${index + 1}`)
+                      ))}
+                    </Stack>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                      上传文件
+                    </Typography>
+                    <Stack spacing={1}>
+                      {project.preparation_info?.documents_path?.map((path, index) => (
+                        renderFile(path, index)
+                      ))}
+                    </Stack>
+                  </Box>
+                </Stack>
               </Grid>
             </Grid>
           </Box>
@@ -338,32 +306,26 @@ export default function ProjectDetailPage() {
         content: (
           <Box>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     报价截图
                   </Typography>
                   <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                     {project.bidding_info?.images_path?.map((path, index) => (
-                      <Paper
-                        key={path}
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getFileUrl(path)}
-                          alt={`报价截图 ${index + 1}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover'
-                          }}
-                        />
-                      </Paper>
+                      renderImage(path, `报价截图 ${index + 1}`)
+                    ))}
+                  </Stack>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                    报价文件
+                  </Typography>
+                  <Stack spacing={1}>
+                    {project.bidding_info?.documents_path?.map((path, index) => (
+                      renderFile(path, index)
                     ))}
                   </Stack>
                 </Box>
@@ -457,50 +419,90 @@ export default function ProjectDetailPage() {
         height: 80,
         overflow: 'hidden',
         cursor: 'pointer',
-        '&:hover': {
-          opacity: 0.8
-        }
+        position: 'relative'
       }}
       onClick={() => setPreviewImage(path)}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {imageLoading[path] && (
+        <Box sx={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
       <img
         src={getFileUrl(path)}
         alt={alt}
+        onLoad={() => setImageLoading(prev => ({ ...prev, [path]: false }))}
+        onError={() => setImageLoading(prev => ({ ...prev, [path]: false }))}
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover'
+          objectFit: 'cover',
+          opacity: imageLoading[path] ? 0 : 1
         }}
       />
     </Paper>
   )
 
   // 渲染文件
-  const renderFile = (path: string, index: number) => (
-    <Paper
-      key={path}
-      sx={{
-        p: 2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}
-    >
-      <Typography>文件 {index + 1}</Typography>
-      <IconButton
-        size="small"
-        onClick={() => window.open(getFileUrl(path), '_blank')}
+  const renderFile = (path: string, index: number) => {
+    const { name, type, ext } = getFileInfo(path)
+    return (
+      <Paper
+        key={path}
+        sx={{
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
       >
-        <Download />
-      </IconButton>
-    </Paper>
-  )
+        <Box sx={{ flex: 1, mr: 2 }}>
+          <Typography noWrap title={name}>
+            {name}
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip 
+              label={ext}
+              size="small"
+              sx={{ 
+                height: 20,
+                fontSize: '0.75rem',
+                bgcolor: 'action.hover'
+              }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {type}
+            </Typography>
+          </Stack>
+        </Box>
+        <IconButton
+          size="small"
+          onClick={() => window.open(getFileUrl(path), '_blank')}
+          title="下载文件"
+        >
+          <Download />
+        </IconButton>
+      </Paper>
+    )
+  }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack spacing={3}>
-        {/* 头部 */}
+    <Box sx={{ 
+      height: 'calc(100vh - 93px)', // 减去顶部导航栏高度
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* 固定头部 */}
+      <Box sx={{ p: 3, borderBottom: '1px solid', borderColor: 'divider' }}>
         <Stack 
           direction="row" 
           alignItems="center" 
@@ -519,17 +521,22 @@ export default function ProjectDetailPage() {
               项目详情
             </Typography>
           </Stack>
-
           {renderActions()}
         </Stack>
+      </Box>
 
-        {/* 内容区域 */}
+      {/* 可滚动内容区域 */}
+      <Box sx={{ 
+        flex: 1,
+        overflow: 'auto',
+        p: 3
+      }}>
         <Paper sx={{ p: 3 }}>
           <Stack spacing={4}>
             {renderSections()}
           </Stack>
         </Paper>
-      </Stack>
+      </Box>
 
       {/* 撤单确认对话框 */}
       <Dialog

@@ -29,7 +29,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter, redirect } from 'next/navigation'
 import { useUser } from '@/app/contexts/user'
-import { useState } from 'react'
+import { useState ,useEffect} from 'react'
 
 // 定义菜单项
 const MENU_ITEMS = [

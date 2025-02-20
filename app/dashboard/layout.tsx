@@ -26,16 +26,13 @@ export default function DashboardLayout({
   }
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login')
-    }
   }, [user, router])
 
   if (!user) return null
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         display: 'flex',
         minHeight: '100vh',
         bgcolor: '#F5F5F5'
@@ -76,9 +73,9 @@ export default function DashboardLayout({
 
       {/* 桌面端固定侧边栏 */}
       {!isMobile && (
-        <Box 
+        <Box
           component="aside"
-          sx={{ 
+          sx={{
             width: DRAWER_WIDTH,
             flexShrink: 0,
             position: 'fixed',
@@ -89,7 +86,7 @@ export default function DashboardLayout({
             boxShadow: '0 0 10px rgba(0,0,0,0.05)'
           }}
         >
-          <Sidebar onClose={() => {}} />
+          <Sidebar onClose={() => { }} />
         </Box>
       )}
 
@@ -105,8 +102,8 @@ export default function DashboardLayout({
           }}
           sx={{
             display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { 
-              boxSizing: 'border-box', 
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
               width: DRAWER_WIDTH,
               bgcolor: 'white',
               boxShadow: '0 0 10px rgba(0,0,0,0.05)'
@@ -118,9 +115,9 @@ export default function DashboardLayout({
       )}
 
       {/* 主内容区域 */}
-      <Box 
-        component="main" 
-        sx={{ 
+      <Box
+        component="main"
+        sx={{
           flexGrow: 1,
           marginLeft: { xs: 0, md: `${DRAWER_WIDTH}px` },
           minWidth: 0,
@@ -147,7 +144,7 @@ export default function DashboardLayout({
       >
         {/* 面包屑导航 */}
         <Breadcrumbs />
-        
+
         {/* 页面内容 */}
         {children}
       </Box>
