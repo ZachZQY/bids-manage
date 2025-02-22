@@ -3,29 +3,27 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@/app/contexts/user"
-import { 
-  Container,
+import {
   Box,
-  Card,
-  CardContent,
+  Paper,
+  Stack,
+  Typography,
   TextField,
   Button,
-  Typography,
   Alert,
   InputAdornment,
-  IconButton,
-  Paper,
-  Stack
+  IconButton
 } from "@mui/material"
-import { Visibility, VisibilityOff, Login as LoginIcon, BoltRounded } from "@mui/icons-material"
+import { BoltRounded, Visibility, VisibilityOff } from "@mui/icons-material"
 
 export default function LoginPage() {
+
   const router = useRouter()
-  const { setUser } = useUser()
+  const { user, setUser } = useUser()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [code, setCode] = useState("")
+  const [showCode, setShowCode] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,8 +40,7 @@ export default function LoginPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
-      await setUser(data.user)
-      
+      setUser(data.user)
       router.push('/dashboard/projects')
 
     } catch (err: any) {
@@ -54,29 +51,31 @@ export default function LoginPage() {
   }
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
-    }}>
-      {/* 顶部公司信息 */}
-      <Box sx={{ 
-        p: 2, 
+    <Box
+      component="main"
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
+      }}
+    >
+      <Box sx={{
+        p: 2,
         display: 'flex',
         alignItems: 'center',
         gap: 2
       }}>
-        <BoltRounded 
-          sx={{ 
+        <BoltRounded
+          sx={{
             fontSize: 40,
             color: 'white',
             filter: 'drop-shadow(1px 1px 2px rgba(0,0,0,0.2))'
-          }} 
+          }}
         />
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             color: 'white',
             fontWeight: 500,
             textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
@@ -86,7 +85,6 @@ export default function LoginPage() {
         </Typography>
       </Box>
 
-      {/* 登录框 */}
       <Box sx={{
         flex: 1,
         display: 'flex',
@@ -94,7 +92,7 @@ export default function LoginPage() {
         justifyContent: 'center',
         p: 3
       }}>
-        <Paper 
+        <Paper
           elevation={4}
           sx={{
             width: '100%',
@@ -114,7 +112,7 @@ export default function LoginPage() {
             </Box>
 
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error">
                 {error}
               </Alert>
             )}
@@ -125,16 +123,31 @@ export default function LoginPage() {
                   label="登录暗号"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
+                  type={showCode ? 'text' : 'password'}
                   fullWidth
                   required
                   autoFocus
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowCode(!showCode)}
+                          edge="end"
+                          size="small"
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {showCode ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   size="large"
                   disabled={loading}
-                  sx={{ 
+                  sx={{
                     height: 48,
                     background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)'
                   }}
@@ -147,7 +160,6 @@ export default function LoginPage() {
         </Paper>
       </Box>
 
-      {/* 底部版权信息 */}
       <Box sx={{ p: 2, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
           © {new Date().getFullYear()} 山东雷电电力有限公司 版权所有

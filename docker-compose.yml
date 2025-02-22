@@ -1,10 +1,17 @@
 version: '3'
 services:
   bids-manage:
-    build: .
+    image: node:20-alpine
     container_name: bids-manage
     restart: always
+    working_dir: /app
+    volumes:
+      - .:/app
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production 
+      - NODE_ENV=production
+    command: >
+      sh -c "npm install --production &&
+             npm run build &&
+             npm start" 

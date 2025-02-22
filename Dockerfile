@@ -1,5 +1,5 @@
-# 构建阶段
-FROM node:18-alpine AS builder
+# 使用 Node.js 20.x 版本
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # 运行阶段
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production

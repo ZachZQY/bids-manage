@@ -28,7 +28,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const handleSetUser = async (newUser: User | null) => {
+  const handleSetUser = (newUser: User | null) => {
     setUser(newUser)
     if (newUser) {
       localStorage.setItem('user', JSON.stringify(newUser))
