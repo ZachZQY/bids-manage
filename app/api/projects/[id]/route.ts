@@ -1,11 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
-import { createLog } from '@/lib/log'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -32,7 +31,7 @@ export async function POST(
 
     const user = JSON.parse(userCookie.value)
 
-    // 查询项目信息
+    // 查询项目详情
     const { datas } = await db.find({
       name: "bid_projects",
       args: {
@@ -44,9 +43,13 @@ export async function POST(
         "id",
         "name",
         "status",
-        "bid_user_bid_users",
         "registration_deadline",
         "bidding_deadline",
+        "bidding_info",
+        "registration_info",
+        "deposit_info",
+        "preparation_info",
+        "bid_user_bid_users",
         {
           name: "bid_company",
           fields: ["id", "name"]
@@ -63,51 +66,20 @@ export async function POST(
 
     const project = datas[0]
 
-    // 检查项目状态
-    if (project.status !== 'pending') {
+    // 检查权限
+    if (project.bid_user_bid_users !== user.id) {
       return NextResponse.json(
-        { error: '项目已被接单' },
-        { status: 400 }
+        { error: '无权查看此项目' },
+        { status: 403 }
       )
     }
 
-    // 更新项目状态
-    await db.mutationGetFirstOne({
-      name: "update_bid_projects",
-      args: {
-        where: {
-          id: { _eq: projectId }
-        },
-        _set: {
-          status: 'registration',
-          bid_user_bid_users: user.id
-        }
-      },
-      returning_fields:["id"]
-    })
-
-    // 记录操作日志
-    await createLog({
-      projectId,
-      actionType: 'take_project',
-      actionInfo: {
-        project_id: projectId
-      }
-    })
-
-    return NextResponse.json({ success: true })
-
+    return NextResponse.json({ project })
   } catch (error) {
-    console.error('接单失败:', error)
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
+    console.error('获取项目详情失败:', error)
     return NextResponse.json(
-      { error: '接单失败' },
+      { error: error instanceof Error ? error.message : '获取项目详情失败' },
       { status: 500 }
     )
   }
-} 
+}

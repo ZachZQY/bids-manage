@@ -4,30 +4,36 @@ import {
   Box,
   Paper,
   Typography,
-  Button,
   TextField,
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Button,
   FormControlLabel,
   Switch,
   Autocomplete,
-  Stack
+  Stack,
+  CircularProgress,
+  Alert,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material'
-import { DateTimePicker } from '@mui/x-date-pickers'
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import dayjs, { Dayjs } from 'dayjs'
 import type { Company } from '@/types/schema'
+import { useDebounce } from '@/app/hooks/useDebounce'
 
 interface FormData {
   name: string
   bidUserId: string
   biddingDeadline: Dayjs
   registrationDeadline: Dayjs
-  bid_company_bid_companies: string
+  bid_company_bid_companies: string | number
 }
 
 interface User {
@@ -52,6 +58,12 @@ export default function CreateProjectPage() {
   const [users, setUsers] = useState<User[]>([])
   const [showBidUser, setShowBidUser] = useState(false)
   const [companies, setCompanies] = useState<Company[]>([])
+  const [projectNames, setProjectNames] = useState<string[]>([])
+  const [loadingNames, setLoadingNames] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+  const debouncedInputValue = useDebounce(inputValue, 300)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     setFormData(getInitialFormData())
@@ -66,7 +78,7 @@ export default function CreateProjectPage() {
     setFormData(getInitialFormData())
     setShowBidUser(false)
     setError('')
-    router.push('/dashboard/projects')
+    router.replace('/dashboard/all-projects')
   }, [router])
 
   useEffect(() => {
@@ -98,6 +110,32 @@ export default function CreateProjectPage() {
 
     fetchCompanies()
   }, [])
+
+  useEffect(() => {
+    const fetchProjectNames = async () => {
+      if (!debouncedInputValue) {
+        setProjectNames([])
+        return
+      }
+
+      try {
+        setLoadingNames(true)
+        const res = await fetch(`/api/projects/names?keyword=${encodeURIComponent(debouncedInputValue)}`)
+        if (!res.ok) throw new Error('获取项目名称失败')
+        
+        const data = await res.json() as { names: string[] }
+        // 去重
+        const uniqueNames = Array.from(new Set(data.names))
+        setProjectNames(uniqueNames)
+      } catch (err) {
+        console.error('获取项目名称失败:', err)
+      } finally {
+        setLoadingNames(false)
+      }
+    }
+
+    fetchProjectNames()
+  }, [debouncedInputValue])
 
   const validateForm = (): string => {
     if (!formData.name.trim()) {
@@ -131,17 +169,22 @@ export default function CreateProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // 打开确认弹窗
+    setConfirmDialogOpen(true)
+  }
 
-    const validationError = validateForm()
-    if (validationError) {
-      setError(validationError)
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
+  const handleConfirmPublish = async () => {
     try {
+      setSubmitting(true)
+      setError('')
+
+      const validationError = validateForm()
+      if (validationError) {
+        setError(validationError)
+        setConfirmDialogOpen(false)
+        return
+      }
+
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: {
@@ -157,17 +200,16 @@ export default function CreateProjectPage() {
       })
 
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.message)
+        throw new Error('创建项目失败')
       }
 
       handleSuccess()
 
     } catch (err) {
-      console.error('创建项目失败:', err)
-      setError(err instanceof Error ? err.message : '创建项目失败')
+      setError(err instanceof Error ? err.message : '未知错误')
+      setConfirmDialogOpen(false)
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -328,207 +370,269 @@ export default function CreateProjectPage() {
   }, [formData, showBidUser])
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-      <Paper sx={{
-        p: 4,
-        boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
-      }}>
-        <Typography variant="h6" sx={{
-          mb: 4,
-          fontWeight: 'bold',
-          background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+    <>
+      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+        <Paper sx={{
+          p: 4,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
         }}>
-          发布新项目
-        </Typography>
+          <Typography variant="h6" sx={{
+            mb: 4,
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            发布新项目
+          </Typography>
 
-        {error && (
-          <Alert
-            severity="error"
-            sx={{
-              mb: 3,
-              '& .MuiAlert-message': {
-                width: '100%'
-              }
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={3}>
-            <TextField
-              label="项目名称"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-              fullWidth
-              error={!!error && error.includes('项目名称')}
-              placeholder="请输入项目名称"
+          {error && (
+            <Alert
+              severity="error"
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: 'primary.main',
-                  }
+                mb: 3,
+                '& .MuiAlert-message': {
+                  width: '100%'
                 }
               }}
-            />
+            >
+              {error}
+            </Alert>
+          )}
 
-            <DateTimePicker
-              label="开标时间"
-              value={formData.biddingDeadline}
-              onChange={handleBiddingDeadlineChange}
-              minDateTime={dayjs()}
-              sx={{ width: '100%' }}
-              slotProps={{
-                textField: {
-                  error: !!error && (error.includes('开标时间') || error.includes('格式')),
-                  helperText: error && (error.includes('开标时间') || error.includes('格式')) ? error : '',
-                  required: true
-                },
-                actionBar: {
-                  actions: ['clear', 'cancel', 'accept']
-                },
-                field: {
-                  clearable: true
-                }
-              }}
-              format="YYYY年MM月DD日 HH:mm"
-              ampm={false}
-              localeText={{
-                okButtonLabel: '确定',
-                cancelButtonLabel: '取消',
-                clearButtonLabel: '清除'
-              }}
-            />
-
-            <DateTimePicker
-              label="报名截止时间"
-              value={formData.registrationDeadline}
-              onChange={handleRegistrationDeadlineChange}
-              minDateTime={dayjs()}
-              maxDateTime={formData.biddingDeadline}
-              sx={{ width: '100%' }}
-              slotProps={{
-                textField: {
-                  error: !!error && (error.includes('报名截止时间') || error.includes('格式')),
-                  helperText: error && (error.includes('报名截止时间') || error.includes('格式')) ? error : '',
-                  required: true
-                },
-                actionBar: {
-                  actions: ['clear', 'cancel', 'accept']
-                },
-                field: {
-                  clearable: true
-                }
-              }}
-              format="YYYY年MM月DD日 HH:mm"
-              ampm={false}
-              localeText={{
-                okButtonLabel: '确定',
-                cancelButtonLabel: '取消',
-                clearButtonLabel: '清除'
-              }}
-            />
-
-            <Box sx={{
-              display: 'flex',
-              alignItems: 'center',
-              bgcolor: 'action.hover',
-              borderRadius: 1,
-              p: 1
-            }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showBidUser}
-                    onChange={(e) => {
-                      setShowBidUser(e.target.checked)
-                      if (!e.target.checked) {
-                        setFormData(prev => ({ ...prev, bidUserId: '' }))
-                      }
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={3}>
+              <Autocomplete
+                freeSolo
+                options={projectNames}
+                loading={loadingNames}
+                inputValue={inputValue}
+                onInputChange={(_, newValue) => {
+                  setInputValue(newValue)
+                  setFormData(prev => ({ ...prev, name: newValue }))
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="项目名称"
+                    required
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingNames ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
                     }}
                   />
-                }
-                label="指定接单人"
-                sx={{
-                  mr: 0,
-                  '& .MuiFormControlLabel-label': {
-                    cursor: 'default',
-                    fontWeight: 500
+                )}
+              />
+
+              <DateTimePicker
+                label="开标时间"
+                value={formData.biddingDeadline}
+                onChange={handleBiddingDeadlineChange}
+                minDateTime={dayjs()}
+                format="YYYY年MM月DD日 HH:mm"
+                ampm={false}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    error: !!error && (error.includes('开标时间') || error.includes('格式')),
+                    helperText: error && (error.includes('开标时间') || error.includes('格式')) ? error : ''
+                  },
+                  actionBar: {
+                    actions: ['clear', 'cancel', 'accept']
                   }
+                }}
+                localeText={{
+                  okButtonLabel: '确定',
+                  cancelButtonLabel: '取消',
+                  clearButtonLabel: '清除'
                 }}
               />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ ml: 2 }}
-              >
-                不指定时项目将进入项目大厅，所有人可接单
-              </Typography>
-            </Box>
 
-            {renderUserSelect()}
-
-            <FormControl fullWidth required>
-              <InputLabel>所属公司</InputLabel>
-              <Select
-                value={formData.bid_company_bid_companies}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  bid_company_bid_companies: e.target.value 
-                }))}
-                label="所属公司"
-              >
-                {companies.map(company => (
-                  <MenuItem key={company.id} value={company.id}>
-                    {company.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Box sx={{
-              display: 'flex',
-              gap: 2,
-              justifyContent: 'flex-end',
-              mt: 2,
-              pt: 3,
-              borderTop: '1px solid',
-              borderColor: 'divider'
-            }}>
-              <Button
-                variant="outlined"
-                onClick={() => router.back()}
-                sx={{
-                  minWidth: 120,
-                  borderRadius: 2
-                }}
-              >
-                取消
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={!!error || loading || !isSubmittable()}
-                sx={{
-                  minWidth: 120,
-                  borderRadius: 2,
-                  background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
-                  boxShadow: '0 3px 5px 2px rgba(25, 118, 210, .3)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #1565c0 30%, #0d47a1 90%)',
+              <DateTimePicker
+                label="报名截止时间"
+                value={formData.registrationDeadline}
+                onChange={handleRegistrationDeadlineChange}
+                minDateTime={dayjs()}
+                maxDateTime={formData.biddingDeadline}
+                format="YYYY年MM月DD日 HH:mm"
+                ampm={false}
+                slotProps={{
+                  textField: {
+                    required: true,
+                    error: !!error && (error.includes('报名截止时间') || error.includes('格式')),
+                    helperText: error && (error.includes('报名截止时间') || error.includes('格式')) ? error : ''
+                  },
+                  actionBar: {
+                    actions: ['clear', 'cancel', 'accept']
                   }
                 }}
-              >
-                {loading ? '发布中...' : '发布项目'}
-              </Button>
-            </Box>
-          </Stack>
-        </form>
-      </Paper>
-    </Box>
+                localeText={{
+                  okButtonLabel: '确定',
+                  cancelButtonLabel: '取消',
+                  clearButtonLabel: '清除'
+                }}
+              />
+
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+                p: 1
+              }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={showBidUser}
+                      onChange={(e) => {
+                        setShowBidUser(e.target.checked)
+                        if (!e.target.checked) {
+                          setFormData(prev => ({ ...prev, bidUserId: '' }))
+                        }
+                      }}
+                    />
+                  }
+                  label="指定接单人"
+                  sx={{
+                    mr: 0,
+                    '& .MuiFormControlLabel-label': {
+                      cursor: 'default',
+                      fontWeight: 500
+                    }
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ ml: 2 }}
+                >
+                  不指定时项目将进入项目大厅，所有人可接单
+                </Typography>
+              </Box>
+
+              {renderUserSelect()}
+
+              <Autocomplete
+                options={companies}
+                getOptionLabel={(option) => option.name}
+                value={companies.find(company => company.id === formData.bid_company_bid_companies) || null}
+                onChange={(_, newValue) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    bid_company_bid_companies: newValue ? newValue.id : ''
+                  }))
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="所属公司"
+                    required
+                    error={!!error && error.includes('公司')}
+                    placeholder="搜索公司名称"
+                  />
+                )}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props
+                  return (
+                    <li key={option.id} {...otherProps}>
+                      <Typography>{option.name}</Typography>
+                    </li>
+                  )
+                }}
+                filterOptions={(options, { inputValue }) => {
+                  const searchValue = inputValue.toLowerCase()
+                  return options.filter(option =>
+                    option.name.toLowerCase().includes(searchValue)
+                  )
+                }}
+                noOptionsText="未找到匹配的公司"
+              />
+
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                justifyContent: 'flex-end',
+                mt: 2,
+                pt: 3,
+                borderTop: '1px solid',
+                borderColor: 'divider'
+              }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.back()}
+                  sx={{
+                    minWidth: 120,
+                    borderRadius: 2
+                  }}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={!!error || loading || !isSubmittable()}
+                  sx={{
+                    minWidth: 120,
+                    borderRadius: 2,
+                    background: 'linear-gradient(45deg, #1976d2 30%, #1565c0 90%)',
+                    boxShadow: '0 3px 5px 2px rgba(25, 118, 210, .3)',
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #1565c0 30%, #0d47a1 90%)',
+                    }
+                  }}
+                >
+                  {loading ? '发布中...' : '发布项目'}
+                </Button>
+              </Box>
+            </Stack>
+          </form>
+        </Paper>
+      </Box>
+
+      {/* 确认弹窗 */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={() => !submitting && setConfirmDialogOpen(false)}
+      >
+        <DialogTitle>确认发布项目</DialogTitle>
+        <DialogContent>
+          <Typography>
+            发布项目后，系统将自动向所有账号发送短信通知。确定要发布吗？
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="primary">
+              项目名称：{formData.name}
+            </Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              开标时间：{formData.biddingDeadline?.format('YYYY年MM月DD日 HH:mm')}
+            </Typography>
+            <Typography variant="subtitle2" color="text.secondary">
+              报名截止时间：{formData.registrationDeadline?.format('YYYY年MM月DD日 HH:mm')}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setConfirmDialogOpen(false)}
+            disabled={submitting}
+          >
+            取消
+          </Button>
+          <Button
+            onClick={handleConfirmPublish}
+            variant="contained"
+            disabled={submitting}
+            autoFocus
+          >
+            {submitting ? <CircularProgress size={24} /> : '确认发布'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
-} 
+}

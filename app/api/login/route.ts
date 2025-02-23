@@ -19,12 +19,19 @@ export async function POST(request: NextRequest) {
       args: {
         where: { code: { _eq: code } }
       },
-      fields: ["id", "name", "code", "role", "phone"]
+      fields: ["id", "name", "code", "role", "phone", "status"]
     });
     
     if (!user) {
       return NextResponse.json(
         { error: '暗号不正确，请重新输入' },
+        { status: 401 }
+      );
+    }
+
+    if (user.status !== 'active') {
+      return NextResponse.json(
+        { error: '用户不存在或已被禁用，请联系管理员' },
         { status: 401 }
       );
     }

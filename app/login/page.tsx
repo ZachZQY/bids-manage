@@ -162,7 +162,7 @@ export default function LoginPage() {
 
       <Box sx={{ p: 2, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-          © {new Date().getFullYear()} 山东雷电电力有限公司 版权所有
+          © <span suppressHydrationWarning>{new Date().getFullYear()}</span> 山东雷电电力有限公司 版权所有
         </Typography>
       </Box>
     </Box>

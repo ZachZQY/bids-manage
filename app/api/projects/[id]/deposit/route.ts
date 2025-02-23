@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { createLog } from '@/lib/log'
+import type { DepositInfo } from '@/types/schema'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,7 @@ export async function POST(
     const projectId = Number(paramsData.id)
     if (isNaN(projectId)) {
       return NextResponse.json(
-        { error: '无效的项目ID' },
+        { message: '无效的项目ID' },
         { status: 400 }
       )
     }
@@ -25,12 +26,15 @@ export async function POST(
 
     if (!userCookie?.value) {
       return NextResponse.json(
-        { error: '未登录' },
+        { message: '未登录' },
         { status: 401 }
       )
     }
 
     const user = JSON.parse(userCookie.value)
+
+    // 获取提交的保证金信息
+    const depositInfo: DepositInfo = await request.json()
 
     // 查询项目信息
     const { datas } = await db.find({
@@ -45,8 +49,6 @@ export async function POST(
         "name",
         "status",
         "bid_user_bid_users",
-        "registration_deadline",
-        "bidding_deadline",
         {
           name: "bid_company",
           fields: ["id", "name"]
@@ -56,17 +58,25 @@ export async function POST(
 
     if (!datas || datas.length === 0) {
       return NextResponse.json(
-        { error: '项目不存在' },
+        { message: '项目不存在' },
         { status: 404 }
       )
     }
 
     const project = datas[0]
 
-    // 检查项目状态
-    if (project.status !== 'pending') {
+    // 检查权限
+    if (project.bid_user_bid_users !== user.id) {
       return NextResponse.json(
-        { error: '项目已被接单' },
+        { message: '无权操作此项目' },
+        { status: 403 }
+      )
+    }
+
+    // 检查项目状态
+    if (project.status !== 'deposit') {
+      return NextResponse.json(
+        { message: '当前状态不允许提交保证金信息' },
         { status: 400 }
       )
     }
@@ -79,35 +89,28 @@ export async function POST(
           id: { _eq: projectId }
         },
         _set: {
-          status: 'registration',
-          bid_user_bid_users: user.id
+          status: 'preparation',
+          deposit_at: new Date().toISOString(),
+          deposit_info: depositInfo
         }
       },
-      returning_fields:["id"]
+      returning_fields: ["id"]
     })
 
     // 记录操作日志
     await createLog({
       projectId,
-      actionType: 'take_project',
-      actionInfo: {
-        project_id: projectId
-      }
+      actionType: 'submit_deposit',
+      actionInfo: depositInfo
     })
 
     return NextResponse.json({ success: true })
 
   } catch (error) {
-    console.error('接单失败:', error)
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
-    }
+    console.error('提交保证金信息失败:', error)
     return NextResponse.json(
-      { error: '接单失败' },
+      { message: error instanceof Error ? error.message : '提交保证金信息失败' },
       { status: 500 }
     )
   }
-} 
+}

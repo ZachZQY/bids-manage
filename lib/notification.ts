@@ -30,39 +30,48 @@ export async function sendNotification(options: NotificationOptions) {
   let content = ''
   switch (type) {
     case 'new_project':
-      content = `【消息中心】您有一个新的标书项目 ${project.name} 请及时提交报名信息！`
-      break
-    case 'status_change':
-      content = `【消息中心】您的标书项目 ${project.name} 进度已更新！`
-      break
-    case 'deadline_reminder':
-      const deadline = project.status === 'registration' ? 
-        project.registration_deadline : project.bidding_deadline
-      content = `【消息中心】您的标书项目 ${project.name} 将在 ${dayjs(deadline).format('YYYY-MM-DD HH:mm')} 截止提交报名信息，请及时处理！`
+      content = `【消息中心】有一个新的标书项目 ${project.name} 请及时查阅！`
       break
   }
 
   try {
+ 
+
+    // 查询所有用户手机号
+    const users = await db.query({
+      name: "bid_users",
+      args: {
+        where: {
+          status: {
+            _eq: "active"
+          },
+          phone: {
+            _is_null: false
+          }
+        }
+      },
+      fields: ["id", "phone"]
+    })
+    const phones = users.map(user => user.phone)
+    if(phones.length === 0) return
+
     const notification = await db.mutationGetFirstOne({
       name: "insert_bid_notifications",
       args: {
         objects: [{
           notification_type: type,
           content,
-          phone: user.phone,
+          phone: phones.join(','),
           status: 'pending',
         }]
       },
-      returning_fields: ["id","content"]
+      returning_fields: ["id", "content"]
     })
-
     const result = await sendSMS({
-      mobile: user.phone,
+      mobile: phones,
       content: notification.content
     })
 
-    console.log(result,1234)
-    
     return notification
   } catch (error) {
     console.error('记录通知失败:', error)

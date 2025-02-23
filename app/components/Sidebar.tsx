@@ -17,59 +17,31 @@ import {
   DialogActions,
   DialogContentText
 } from "@mui/material"
-import {
-  Dashboard as DashboardIcon,
-  People as PeopleIcon,
-  Assignment as AssignmentIcon,
-  AssignmentInd as MyProjectsIcon,
+import { 
   Logout as LogoutIcon,
+  Home,
+  Assignment,
+  Business,
+  People,
   History,
-  Business
+  Search
 } from "@mui/icons-material"
 import Link from 'next/link'
 import { usePathname, useRouter, redirect } from 'next/navigation'
 import { useUser } from '@/app/contexts/user'
-import { useState ,useEffect} from 'react'
+import { useState } from 'react'
+import { MENU_CONFIG } from '../config'
+import React from 'react'
 
-// 定义菜单项
-const MENU_ITEMS = [
-  {
-    path: '/dashboard/projects',
-    label: '项目大厅',
-    icon: <DashboardIcon />,
-    roles: ['admin', 'staff']  // 所有角色可见
-  },
-  {
-    path: '/dashboard/my-projects',
-    label: '我的项目',
-    icon: <MyProjectsIcon />,
-    roles: ['admin', 'staff']  // 所有角色可见
-  },
-  {
-    path: '/dashboard/all-projects',
-    label: '全部项目',
-    icon: <AssignmentIcon />,
-    roles: ['admin']  // 仅管理员可见
-  },
-  {
-    path: '/dashboard/users',
-    label: '账号管理',
-    icon: <PeopleIcon />,
-    roles: ['admin']  // 仅管理员可见
-  },
-  {
-    label: '日志记录',
-    path: '/dashboard/logs',
-    icon: <History />,  // 从 @mui/icons-material 导入
-    roles: ['admin']    // 只有管理员可见
-  },
-  {
-    path: '/dashboard/companies',
-    label: '公司管理',
-    icon: <Business />,  // 从 @mui/icons-material 导入
-    roles: ['admin']  // 仅管理员可见
-  }
-]
+// 图标映射
+const ICON_MAP = {
+  Home,
+  Assignment,
+  Business,
+  People,
+  History,
+  Search
+}
 
 interface SidebarProps {
   onClose: () => void
@@ -82,7 +54,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   // 根据用户角色过滤菜单项
-  const filteredMenuItems = MENU_ITEMS.filter(item =>
+  const filteredMenuItems = MENU_CONFIG.filter(item =>
     item.roles.includes(user?.role || 'staff')
   )
 
@@ -153,7 +125,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               }}
             >
               <ListItemIcon sx={{ minWidth: 40, color: 'text.secondary' }}>
-                {item.icon}
+                {React.createElement(ICON_MAP[item.icon])}
               </ListItemIcon>
               <ListItemText
                 primary={item.label}

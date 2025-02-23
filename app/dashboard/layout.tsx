@@ -119,35 +119,26 @@ export default function DashboardLayout({
         component="main"
         sx={{
           flexGrow: 1,
+          p: 3,
           marginLeft: { xs: 0, md: `${DRAWER_WIDTH}px` },
           minWidth: 0,
-          p: { xs: 2, md: 3 },
           pt: { xs: '72px', md: 3 },
           height: '100vh',
-          overflow: 'auto',
-          bgcolor: '#F5F5F5',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px'
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: 'transparent'
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(0,0,0,0.1)',
-            borderRadius: '4px',
-            '&:hover': {
-              backgroundColor: 'rgba(0,0,0,0.2)'
-            }
-          }
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          bgcolor: '#F5F5F5'
         }}
       >
         {/* 面包屑导航 */}
-        <Breadcrumbs />
-
+        <Box sx={{ mb: 2, flexShrink: 0 }}>
+          <Breadcrumbs />
+        </Box>
         {/* 页面内容 */}
-        {children}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   )
-} 
+}

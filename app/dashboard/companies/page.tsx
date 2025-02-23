@@ -2,18 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableContainer,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
-  Button,
-  Stack,
   TextField,
   InputAdornment,
   Chip,
@@ -21,17 +9,18 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
+  Button,
+  Stack,
   MenuItem,
-  CircularProgress,
-  Alert
+  TableRow,
+  TableCell,
+  CircularProgress
 } from '@mui/material'
-import { Search, Add } from '@mui/icons-material'
+import { Search } from '@mui/icons-material'
 import type { Company } from '@/types/schema'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/app/contexts/user'
+import CommonList from '@/app/components/CommonList'
 
 // 公司状态配置
 const COMPANY_STATUS_CONFIG = {
@@ -145,159 +134,123 @@ export default function CompaniesPage() {
   }
 
   return (
-    <Box sx={{ p: 3, height: 'calc(100% - 48px)', display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* 标题和操作栏 */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6">公司管理</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => {
-            setEditingCompany(null)
-            setDialogOpen(true)
-          }}
-        >
-          新增公司
-        </Button>
-      </Stack>
+    <>
+      <CommonList
+        loading={loading}
+        error={error}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        total={total}
+        showCreateButton
+        createButtonText="新增公司"
+        onCreateClick={() => {
+          setEditingCompany(null)
+          setDialogOpen(true)
+        }}
+        onPageChange={setPage}
+        onRowsPerPageChange={setRowsPerPage}
+        filterComponent={
+          <Stack direction="row" spacing={2} alignItems="center">
+            <TextField
+              select
+              label="状态"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as 'all' | 'active' | 'inactive')}
+              sx={{ width: 150 }}
+              size="small"
+            >
+              <MenuItem value="all">全部</MenuItem>
+              <MenuItem value="active">启用</MenuItem>
+              <MenuItem value="inactive">禁用</MenuItem>
+            </TextField>
 
-      {/* 筛选工具栏 */}
-      <Paper sx={{ p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <TextField
-            select
-            label="状态"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as 'all' | 'active' | 'inactive')}
-            sx={{ width: 150 }}
-            size="small"
-          >
-            <MenuItem value="all">全部</MenuItem>
-            <MenuItem value="active">启用</MenuItem>
-            <MenuItem value="inactive">禁用</MenuItem>
-          </TextField>
-
-          <TextField
-            placeholder="搜索公司名称"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            size="small"
-            sx={{ width: 200 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search fontSize="small" />
-                </InputAdornment>
-              )
-            }}
-          />
-        </Stack>
-      </Paper>
-
-      {/* 公司列表 */}
-      <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>公司名称</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>创建时间</TableCell>
-                <TableCell>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {companies.map((company) => (
-                <TableRow key={company.id} hover>
-                  <TableCell>{company.name}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={COMPANY_STATUS_CONFIG[company.status].label}
-                      size="small"
-                      sx={{
-                        color: COMPANY_STATUS_CONFIG[company.status].color,
-                        bgcolor: COMPANY_STATUS_CONFIG[company.status].bgColor,
-                        fontWeight: 500
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {new Date(company.created_at).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => {
-                        setEditingCompany(company)
-                        setFormData({
-                          name: company.name,
-                          status: company.status
-                        })
-                        setDialogOpen(true)
-                      }}
-                    >
-                      编辑
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <TablePagination
-          rowsPerPageOptions={[10, 20, 50]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10))
-            setPage(0)
-          }}
-          labelRowsPerPage="每页行数"
-        />
-      </Paper>
+            <TextField
+              placeholder="搜索公司名称"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              size="small"
+              sx={{ width: 200 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Stack>
+        }
+        tableHead={
+          <TableRow>
+            <TableCell>ID</TableCell>
+            <TableCell>公司名称</TableCell>
+            <TableCell>状态</TableCell>
+            <TableCell>创建时间</TableCell>
+            <TableCell>操作</TableCell>
+          </TableRow>
+        }
+        tableBody={
+          companies.map((company) => (
+            <TableRow key={company.id} hover>
+              <TableCell>{company.id}</TableCell>
+              <TableCell>{company.name}</TableCell>
+              <TableCell>
+                <Chip
+                  label={COMPANY_STATUS_CONFIG[company.status].label}
+                  size="small"
+                  sx={{
+                    color: COMPANY_STATUS_CONFIG[company.status].color,
+                    bgcolor: COMPANY_STATUS_CONFIG[company.status].bgColor,
+                    fontWeight: 500
+                  }}
+                />
+              </TableCell>
+              <TableCell>{new Date(company.created_at).toLocaleString()}</TableCell>
+              <TableCell>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setEditingCompany(company)
+                    setFormData({
+                      name: company.name,
+                      status: company.status
+                    })
+                    setDialogOpen(true)
+                  }}
+                >
+                  编辑
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))
+        }
+      />
 
       {/* 新增/编辑对话框 */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={() => !submitting && setDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {editingCompany ? '编辑公司' : '新增公司'}
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2 }}>
+      <Dialog open={dialogOpen} onClose={() => !submitting && setDialogOpen(false)}>
+        <DialogTitle>{editingCompany ? '编辑公司' : '新增公司'}</DialogTitle>
+        <DialogContent sx={{ minWidth: 400 }}>
+          <Stack spacing={3} sx={{ mt: 2 }}>
             <TextField
               label="公司名称"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              fullWidth
-              required
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              disabled={submitting}
             />
-            <FormControl fullWidth>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                label="状态"
-              >
-                <MenuItem value="active">启用</MenuItem>
-                <MenuItem value="inactive">禁用</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              label="状态"
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              disabled={submitting}
+            >
+              <MenuItem value="active">启用</MenuItem>
+              <MenuItem value="inactive">禁用</MenuItem>
+            </TextField>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={() => setDialogOpen(false)}
-            disabled={submitting}
-          >
+          <Button onClick={() => setDialogOpen(false)} disabled={submitting}>
             取消
           </Button>
           <Button
@@ -305,10 +258,10 @@ export default function CompaniesPage() {
             onClick={handleSubmit}
             disabled={submitting}
           >
-            {submitting ? '提交中...' : '确认'}
+            {submitting ? <CircularProgress size={24} /> : '确定'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   )
-} 
+}

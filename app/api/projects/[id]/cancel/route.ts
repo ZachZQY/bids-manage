@@ -2,19 +2,18 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
 import { createLog } from '@/lib/log'
-
 export const dynamic = 'force-dynamic'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }>}
 ) {
   try {
     const paramsData = await params
     const projectId = Number(paramsData.id)
     if (isNaN(projectId)) {
       return NextResponse.json(
-        { error: '无效的项目ID' },
+        { message: '无效的项目ID' },
         { status: 400 }
       )
     }
@@ -25,7 +24,7 @@ export async function POST(
 
     if (!userCookie?.value) {
       return NextResponse.json(
-        { error: '未登录' },
+        { message: '未登录' },
         { status: 401 }
       )
     }
@@ -56,17 +55,25 @@ export async function POST(
 
     if (!datas || datas.length === 0) {
       return NextResponse.json(
-        { error: '项目不存在' },
+        { message: '项目不存在' },
         { status: 404 }
       )
     }
 
     const project = datas[0]
 
-    // 检查项目状态
-    if (project.status !== 'pending') {
+    // 检查权限
+    if (project.bid_user_bid_users !== user.id) {
       return NextResponse.json(
-        { error: '项目已被接单' },
+        { message: '无权操作此项目' },
+        { status: 403 }
+      )
+    }
+
+    // 检查项目状态
+    if (project.status !== 'registration') {
+      return NextResponse.json(
+        { message: '只能在报名阶段撤单' },
         { status: 400 }
       )
     }
@@ -79,8 +86,8 @@ export async function POST(
           id: { _eq: projectId }
         },
         _set: {
-          status: 'registration',
-          bid_user_bid_users: user.id
+          status: 'pending',
+          bid_user_bid_users: null
         }
       },
       returning_fields:["id"]
@@ -89,24 +96,24 @@ export async function POST(
     // 记录操作日志
     await createLog({
       projectId,
-      actionType: 'take_project',
+      actionType: 'cancel_project',
       actionInfo: {
-        project_id: projectId
+        reason: '用户主动撤单'
       }
     })
 
     return NextResponse.json({ success: true })
 
   } catch (error) {
-    console.error('接单失败:', error)
+    console.error('撤单失败:', error)
     if (error instanceof Error) {
       return NextResponse.json(
-        { error: error.message },
+        { message: error.message },
         { status: 500 }
       )
     }
     return NextResponse.json(
-      { error: '接单失败' },
+      { message: '撤单失败' },
       { status: 500 }
     )
   }
