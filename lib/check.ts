@@ -50,14 +50,10 @@ function findConflicts(project1: Project, project2: Project): string[] {
 /**
  * 执行串标检测
  * @param projectId 当前项目ID
- * @param projectName 当前项目名称
- * @param companyId 当前公司ID
  * @returns 返回检测结果，如果发现串标则返回true
  */
 export async function checkBidConflict(
-  projectId: number,
-  projectName: string,
-  companyId: number
+  projectId: number
 ): Promise<boolean> {
   try {
     // 获取当前项目信息
@@ -80,6 +76,9 @@ export async function checkBidConflict(
       ]
     })
 
+    const projectName = currentProject[0]?.name
+    const companyName = currentProject[0]?.bid_company?.name
+
     if (!currentProject || currentProject.length === 0) {
       throw new Error('项目不存在')
     }
@@ -90,8 +89,7 @@ export async function checkBidConflict(
       args: {
         where: {
           name: { _eq: projectName },
-          id: { _neq: projectId },
-          bid_company_bid_companies: { _neq: companyId }
+          id: { _neq: projectId }
         }
       },
       fields: [
@@ -135,7 +133,9 @@ export async function checkBidConflict(
         name: "insert_bid_checks",
         args: {
           objects: [{
+            bid_project_bid_projects: projectId,
             project_name: projectName,
+            company_name: companyName,
             is_resolve: false
           }]
         },

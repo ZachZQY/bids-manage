@@ -97,7 +97,9 @@ export interface Tables {
   // 串标检测记录
   bid_checks: {
     id: number;
+    bid_project_bid_projects: number;//关联项目id（仅用作记录）
     project_name: string;//项目名称
+    company_name: string;//项目对应的公司名称
     is_resolve: boolean;//是否解决
     resolve_content?: string;//解决说明
     created_at: string;
@@ -125,7 +127,10 @@ export interface User {
 }
 export interface Project {
   id: number;                    // 项目ID
-  name: string;                  // 项目名称
+  name: string;                  // 项目名称,规则为：batch_name（product_name），如：A01（Laptop）
+  
+  batch_name: string;   // 投标批次
+  product_name: string; // 投标产品
   bidding_deadline: string;      // 开标时间
   registration_deadline: string; // 报名截止时间
   bid_user_bid_users?: number;   // 接单处理人ID,关联名称bid_user

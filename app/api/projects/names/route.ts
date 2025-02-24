@@ -5,26 +5,31 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const keyword = searchParams.get('keyword') || ''
+    const type = searchParams.get('type') || ''
 
+    const where: Record<string, any> = {}
+    if (type == "batch") {
+      where.batch_name = { _ilike: `%${keyword}%` }
+    } else if (type == "product") {
+      where.product_name = { _ilike: `%${keyword}%` }
+    }
     const rows = await db.query(
       {
         name: 'bid_projects',
         args: {
-          where: {
-            name: { _ilike: `%${keyword}%` }
-          },
-          distinct_on: [()=>"created_at",()=>'name'],
+          where: where,
+          distinct_on: [() => "created_at", () => 'name'],
           limit: 20,
-          order_by:{
-            created_at:()=>"desc"
+          order_by: {
+            created_at: () => "desc"
           }
         },
-        fields: ['name']
+        fields: ['name', 'batch_name', 'product_name']
       }
     )
 
     return Response.json({
-      names: rows.map(row => row.name)
+      names: rows.map(row => row?.[`${type}_name`])
     })
   } catch (error) {
     console.error('Error fetching project names:', error)

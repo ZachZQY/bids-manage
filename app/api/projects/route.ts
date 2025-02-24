@@ -163,11 +163,20 @@ export async function GET(request: NextRequest) {
             status: { _eq: "pending" }
           }
         }
+      },{
+        alias: "all",
+        name: "bid_projects_aggregate",
+        fields: { name: "aggregate", fields: ["count"] },
+        args: {
+          where: {
+            ...(type === 'my' ? { bid_user_bid_users: { _eq: user.id } } : {}),
+          }
+        }
       }]
     })
 
     const stats = {
-      all: aggregate?.count || 0,
+      all: statsResponse.all.aggregate.count,
       registration: statsResponse.registration.aggregate.count,
       deposit: statsResponse.deposit.aggregate.count,
       preparation: statsResponse.preparation.aggregate.count,
@@ -203,12 +212,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const {
-      name,
+      batch_name,
+      product_name,
       bidding_deadline,
       registration_deadline,
       bid_user_bid_users,
       bid_company_bid_companies
     } = body
+    const name = `${batch_name}（${product_name}）`
     const user = await getUser()
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })
@@ -218,6 +229,8 @@ export async function POST(request: Request) {
       args: {
         objects: [{
           name,
+          product_name,
+          batch_name,
           bidding_deadline,
           registration_deadline,
           bid_company_bid_companies,

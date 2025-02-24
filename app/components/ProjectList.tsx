@@ -26,10 +26,13 @@ import {
   DialogActions,
   FormControl,
   Select,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Badge,
+  alpha,
+  Collapse
 } from "@mui/material"
-import { Add, Search, Clear } from "@mui/icons-material"
-import { useState, useCallback, useEffect } from "react"
+import { Add, Search, Clear, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { useUser } from "@/app/contexts/user"
 import dayjs from "dayjs"
 import { useRouter } from 'next/navigation'
@@ -84,6 +87,44 @@ export default function ProjectList({
   const availableStatuses = Object.entries(STATUS_CONFIG).filter(
     ([value]) => !excludeStatuses?.includes(value as BidStatus)
   )
+
+  // 阶段配置
+  const stages = [
+    { 
+      key: 'registration', 
+      label: '报名阶段', 
+      color: 'primary',
+      icon: '📝',
+      description: '等待投标人提交报名信息'
+    },
+    { 
+      key: 'deposit', 
+      label: '保证金阶段', 
+      color: 'secondary',
+      icon: '💰',
+      description: '等待投标人缴纳保证金'
+    },
+    { 
+      key: 'preparation', 
+      label: '上传阶段', 
+      color: 'info',
+      icon: '📤',
+      description: '等待投标人上传标书文件'
+    },
+    { 
+      key: 'bidding', 
+      label: '报价阶段', 
+      color: 'warning',
+      icon: '💹',
+      description: '等待投标人提交报价信息'
+    }
+  ] as const
+
+  // 处理阶段点击
+  const handleStageClick = (stage: BidStatus) => {
+    setStatus(prev => prev === stage ? 'all' : stage)
+    setPage(0)
+  }
 
   // 获取项目列表
   const fetchProjects = useCallback(async (currentPage: number = page) => {
@@ -210,6 +251,60 @@ export default function ProjectList({
     setConfirmCancelDialog(true)
   }
 
+  // 删除项目相关状态
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [deleteProjectName, setDeleteProjectName] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  // 处理删除项目
+  const handleDeleteClick = (project: Project) => {
+    setSelectedProject(project)
+    setDeleteProjectName('')
+    setDeletePassword('')
+    setDeleteError('')
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedProject) return
+
+    try {
+      setDeleting(true)
+      setDeleteError('')
+
+      const res = await fetch(`/api/projects/${selectedProject.id}/delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectName: deleteProjectName,
+          password: deletePassword
+        })
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || '删除失败')
+      }
+
+      // 刷新项目列表
+      fetchProjects()
+      setDeleteDialogOpen(false)
+      
+    } catch (err) {
+      console.error('删除项目失败:', err)
+      setDeleteError(err instanceof Error ? err.message : '删除失败')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const [expanded, setExpanded] = useState(true)
+
   return (
     <Box sx={{
       height: 'calc(100% - 48px)',
@@ -217,6 +312,106 @@ export default function ProjectList({
       flexDirection: 'column',
       gap: 3
     }}>
+      {/* 阶段统计 */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 3,
+          bgcolor: 'grey.50',
+          borderRadius: 2
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack 
+            direction="row" 
+            alignItems="center" 
+            spacing={1}
+            sx={{ cursor: 'pointer' }}
+            onClick={() => setExpanded(!expanded)}
+          >
+            <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600, flex: 1 }}>
+              项目阶段概览
+            </Typography>
+            <IconButton 
+              size="small"
+              sx={{ 
+                transition: 'transform 0.2s',
+                transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)'
+              }}
+            >
+              {expanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </IconButton>
+          </Stack>
+          
+          <Collapse in={expanded}>
+            <Box sx={{ 
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: 2
+            }}>
+              {stages.map(({ key, label, color, icon, description }) => (
+                <Paper
+                  key={key}
+                  onClick={() => handleStageClick(key as BidStatus)}
+                  elevation={status === key ? 2 : 0}
+                  sx={{
+                    p: 2,
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.2s',
+                    bgcolor: status === key ? `${color}.lighter` : 'background.paper',
+                    border: 1,
+                    borderColor: status === key ? `${color}.main` : 'divider',
+                    '&:hover': {
+                      bgcolor: status === key ? `${color}.lighter` : `${color}.50`,
+                      transform: 'translateY(-2px)',
+                      boxShadow: 2
+                    }
+                  }}
+                >
+                  <Stack spacing={1}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="h4" component="span" sx={{ lineHeight: 1 }}>
+                        {icon}
+                      </Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: status === key ? `${color}.darker` : 'text.primary' }}>
+                          {label}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                          {description}
+                        </Typography>
+                      </Box>
+                      <Typography 
+                        variant="h4" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: status === key ? `${color}.darker` : `${color}.main`
+                        }}
+                      >
+                        {stats[key] || 0}
+                      </Typography>
+                    </Stack>
+                    {status === key && (
+                      <Box sx={{ 
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 3,
+                        bgcolor: `${color}.main`,
+                        borderBottomLeftRadius: 8,
+                        borderBottomRightRadius: 8
+                      }} />
+                    )}
+                  </Stack>
+                </Paper>
+              ))}
+            </Box>
+          </Collapse>
+        </Stack>
+      </Paper>
+
       {/* 顶部操作区 */}
       <Paper sx={{ p: 2, bgcolor: 'white' }}>
         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
@@ -230,7 +425,7 @@ export default function ProjectList({
                   displayEmpty
                 >
                   <MenuItem value="all">
-                    全部 ({stats.all || 0})
+                    全部 ({stats.all|| 0})
                   </MenuItem>
                   {availableStatuses.map(([value, config]) => (
                     <MenuItem key={value} value={value}>
@@ -500,6 +695,17 @@ export default function ProjectList({
                           提交报价
                         </Button>
                       )}
+                      {/* 删除按钮 */}
+                      {user?.role === 'admin' && (
+                        <Button
+                          variant="text"
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteClick(project)}
+                        >
+                          删除
+                        </Button>
+                      )}
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -547,6 +753,65 @@ export default function ProjectList({
             onClick={() => selectedProjectId && handleCancelProject(selectedProjectId)}
           >
             确认撤单
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 删除确认对话框 */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          删除项目
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={3}>
+            <Typography color="error">
+              请注意：删除操作不可恢复，请谨慎操作！
+            </Typography>
+            
+            <Typography>
+              要删除项目 <strong>{selectedProject?.name}</strong>，请输入完整的项目名称和删除密码：
+            </Typography>
+
+            <TextField
+              label="项目名称"
+              fullWidth
+              value={deleteProjectName}
+              onChange={(e) => setDeleteProjectName(e.target.value)}
+              error={!!deleteError}
+              disabled={deleting}
+            />
+
+            <TextField
+              label="删除密码"
+              type="password"
+              fullWidth
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              error={!!deleteError}
+              helperText={deleteError}
+              disabled={deleting}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+          >
+            取消
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteConfirm}
+            disabled={!deleteProjectName || !deletePassword || deleting}
+          >
+            确认删除
           </Button>
         </DialogActions>
       </Dialog>

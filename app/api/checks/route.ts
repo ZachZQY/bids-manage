@@ -58,12 +58,16 @@ export async function GET(request: NextRequest) {
         "resolve_content",
         "created_at",
         "updated_at",
+        "bid_project_bid_projects",//做检测的项目的id
+        "company_name",//做检测项目的公司
+
         {
           name: "bid_checks_projects",
           fields: [
             "id",
-            "company_name",
-            "conflict_content",
+            "bid_project_bid_projects",
+            "company_name",//冲突的公司
+            "conflict_content",// 冲突的内容
             "created_at"
           ]
         }

@@ -51,6 +51,10 @@ export async function GET(
         "preparation_info",
         "bid_user_bid_users",
         {
+          name:"bid_user",
+          fields: ["id", "name", "phone"]
+        },
+        {
           name: "bid_company",
           fields: ["id", "name"]
         }
@@ -67,7 +71,7 @@ export async function GET(
     const project = datas[0]
 
     // 检查权限
-    if (project.bid_user_bid_users !== user.id) {
+    if (project.bid_user_bid_users !== user.id&&user.role!=='admin') {
       return NextResponse.json(
         { error: '无权查看此项目' },
         { status: 403 }

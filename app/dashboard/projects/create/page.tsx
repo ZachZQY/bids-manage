@@ -29,7 +29,8 @@ import type { Company } from '@/types/schema'
 import { useDebounce } from '@/app/hooks/useDebounce'
 
 interface FormData {
-  name: string
+  batch_name: string
+  product_name: string
   bidUserId: string
   biddingDeadline: Dayjs
   registrationDeadline: Dayjs
@@ -43,7 +44,8 @@ interface User {
 }
 
 const getInitialFormData = (): FormData => ({
-  name: '',
+  batch_name: '',
+  product_name: '',
   bidUserId: '',
   biddingDeadline: dayjs().add(7, 'day'),
   registrationDeadline: dayjs().add(3, 'day'),
@@ -64,6 +66,18 @@ export default function CreateProjectPage() {
   const debouncedInputValue = useDebounce(inputValue, 300)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // 批次名称自动填充
+  const [batchInputValue, setBatchInputValue] = useState('')
+  const [batchNames, setBatchNames] = useState<string[]>([])
+  const [loadingBatchNames, setLoadingBatchNames] = useState(false)
+  const debouncedBatchValue = useDebounce(batchInputValue, 300)
+
+  // 产品名称自动填充
+  const [productInputValue, setProductInputValue] = useState('')
+  const [productNames, setProductNames] = useState<string[]>([])
+  const [loadingProductNames, setLoadingProductNames] = useState(false)
+  const debouncedProductValue = useDebounce(productInputValue, 300)
 
   useEffect(() => {
     setFormData(getInitialFormData())
@@ -112,34 +126,62 @@ export default function CreateProjectPage() {
   }, [])
 
   useEffect(() => {
-    const fetchProjectNames = async () => {
-      if (!debouncedInputValue) {
-        setProjectNames([])
+    const fetchBatchNames = async () => {
+      if (!debouncedBatchValue) {
+        setBatchNames([])
         return
       }
 
       try {
-        setLoadingNames(true)
-        const res = await fetch(`/api/projects/names?keyword=${encodeURIComponent(debouncedInputValue)}`)
-        if (!res.ok) throw new Error('获取项目名称失败')
+        setLoadingBatchNames(true)
+        const res = await fetch(`/api/projects/names?type=batch&keyword=${encodeURIComponent(debouncedBatchValue)}`)
+        if (!res.ok) throw new Error('获取批次名称失败')
         
         const data = await res.json() as { names: string[] }
-        // 去重
-        const uniqueNames = Array.from(new Set(data.names))
-        setProjectNames(uniqueNames)
+        const uniqueNames = Array.from(new Set(data.names.map(item => item)))
+        setBatchNames(uniqueNames)
       } catch (err) {
-        console.error('获取项目名称失败:', err)
+        console.error('获取批次名称失败:', err)
       } finally {
-        setLoadingNames(false)
+        setLoadingBatchNames(false)
       }
     }
 
-    fetchProjectNames()
-  }, [debouncedInputValue])
+    fetchBatchNames()
+  }, [debouncedBatchValue])
+
+  useEffect(() => {
+    const fetchProductNames = async () => {
+      if (!debouncedProductValue) {
+        setProductNames([])
+        return
+      }
+
+      try {
+        setLoadingProductNames(true)
+        const res = await fetch(`/api/projects/names?type=product&keyword=${encodeURIComponent(debouncedProductValue)}`)
+        if (!res.ok) throw new Error('获取产品名称失败')
+        
+        const data = await res.json() as { names: string[] }
+        const uniqueNames = Array.from(new Set(data.names.map(item => item)))
+        setProductNames(uniqueNames)
+      } catch (err) {
+        console.error('获取产品名称失败:', err)
+      } finally {
+        setLoadingProductNames(false)
+      }
+    }
+
+    fetchProductNames()
+  }, [debouncedProductValue])
 
   const validateForm = (): string => {
-    if (!formData.name.trim()) {
-      return '请输入项目名称'
+    if (!formData.batch_name.trim()) {
+      return '请输入投标批次名称'
+    }
+
+    if (!formData.product_name.trim()) {
+      return '请输入投标产品名称'
     }
 
     if (!formData.biddingDeadline.isValid()) {
@@ -191,7 +233,8 @@ export default function CreateProjectPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: formData.name,
+          batch_name: formData.batch_name,
+          product_name: formData.product_name,
           bid_user_bid_users: showBidUser ? Number(formData.bidUserId) : undefined,
           bidding_deadline: formData.biddingDeadline.valueOf(),
           registration_deadline: formData.registrationDeadline.valueOf(),
@@ -344,7 +387,8 @@ export default function CreateProjectPage() {
   // 检查表单是否可以提交
   const isSubmittable = useCallback(() => {
     // 基本字段验证
-    if (!formData.name.trim()) return false
+    if (!formData.batch_name.trim()) return false
+    if (!formData.product_name.trim()) return false
 
     // 时间格式验证
     if (!formData.biddingDeadline || !formData.registrationDeadline) return false
@@ -362,6 +406,8 @@ export default function CreateProjectPage() {
       formData.registrationDeadline.isAfter(formData.biddingDeadline)) {
       return false
     }
+
+    
 
     // 指定接单人验证
     if (showBidUser && !formData.bidUserId) return false
@@ -402,25 +448,82 @@ export default function CreateProjectPage() {
 
           <form onSubmit={handleSubmit}>
             <Stack spacing={3}>
+              {/* 投标批次输入 */}
               <Autocomplete
                 freeSolo
-                options={projectNames}
-                loading={loadingNames}
-                inputValue={inputValue}
+                options={batchNames}
+                loading={loadingBatchNames}
+                value={formData.batch_name}
+                inputValue={batchInputValue}
                 onInputChange={(_, newValue) => {
-                  setInputValue(newValue)
-                  setFormData(prev => ({ ...prev, name: newValue }))
+                  setBatchInputValue(newValue)
+                  setFormData(prev => ({
+                    ...prev,
+                    batch_name: newValue
+                  }))
+                }}
+                onChange={(_, newValue) => {
+                  if (newValue) {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      batch_name: newValue
+                    }))
+                  }
                 }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="项目名称"
+                    label="投标批次"
                     required
+                    error={!!error && !formData.batch_name}
+                    helperText={!!error && !formData.batch_name ? '请输入投标批次' : ''}
                     InputProps={{
                       ...params.InputProps,
                       endAdornment: (
                         <>
-                          {loadingNames ? <CircularProgress color="inherit" size={20} /> : null}
+                          {loadingBatchNames ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+
+              {/* 投标产品输入 */}
+              <Autocomplete
+                freeSolo
+                options={productNames}
+                loading={loadingProductNames}
+                value={formData.product_name}
+                inputValue={productInputValue}
+                onInputChange={(_, newValue) => {
+                  setProductInputValue(newValue)
+                  setFormData(prev => ({
+                    ...prev,
+                    product_name: newValue
+                  }))
+                }}
+                onChange={(_, newValue) => {
+                  if (newValue) {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      product_name: newValue
+                    }))
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="投标产品"
+                    required
+                    error={!!error && !formData.product_name}
+                    helperText={!!error && !formData.product_name ? '请输入投标产品' : ''}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingProductNames ? <CircularProgress color="inherit" size={20} /> : null}
                           {params.InputProps.endAdornment}
                         </>
                       ),
@@ -606,7 +709,10 @@ export default function CreateProjectPage() {
           </Typography>
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="primary">
-              项目名称：{formData.name}
+              投标批次：{formData.batch_name}
+            </Typography>
+            <Typography variant="subtitle2" color="primary">
+              投标产品：{formData.product_name}
             </Typography>
             <Typography variant="subtitle2" color="text.secondary">
               开标时间：{formData.biddingDeadline?.format('YYYY年MM月DD日 HH:mm')}

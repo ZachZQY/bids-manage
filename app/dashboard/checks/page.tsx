@@ -197,6 +197,15 @@ export default function ChecksPage() {
             </TableCell>
             <TableCell>
               <TableSortLabel
+                active={sortField === 'company_name'}
+                direction={sortField === 'company_name' ? sortOrder : 'asc'}
+                onClick={() => handleSort('company_name')}
+              >
+                投标公司
+              </TableSortLabel>
+            </TableCell>
+            <TableCell>
+              <TableSortLabel
                 active={sortField === 'is_resolve'}
                 direction={sortField === 'is_resolve' ? sortOrder : 'asc'}
                 onClick={() => handleSort('is_resolve')}
@@ -236,6 +245,7 @@ export default function ChecksPage() {
                   </Tooltip>
                 </Stack>
               </TableCell>
+              <TableCell>{check.company_name}</TableCell>
               <TableCell>
                 <Chip
                   label={check.is_resolve ? '已解决' : '未解决'}
@@ -294,42 +304,60 @@ export default function ChecksPage() {
             </Typography>
           </Box>
 
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              投标公司
+            </Typography>
+            <Typography variant="body1">
+              {selectedCheck?.company_name}
+            </Typography>
+          </Box>
+
           <Typography variant="subtitle2" gutterBottom>
-            串标信息
+            检测时间
           </Typography>
-          {selectedCheck?.bid_checks_projects?.map((project, index) => (
-            <Box
-              key={project.id}
-              sx={{
-                mb: 2,
-                p: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1
-              }}
-            >
-              <Typography variant="subtitle2" color="primary" gutterBottom>
-                关联公司 {index + 1}: {project.company_name}
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                冲突内容:
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {project.conflict_content?.split('、').map((item, i) => (
-                  <Chip
-                    key={i}
-                    label={item}
-                    size="small"
-                    color="warning"
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                检测时间: {new Date(project.created_at).toLocaleString()}
-              </Typography>
-            </Box>
-          ))}
+          <Typography variant="body1">
+            {selectedCheck && new Date(selectedCheck.created_at).toLocaleString()}
+          </Typography>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              串标信息
+            </Typography>
+            {selectedCheck?.bid_checks_projects?.map((project, index) => (
+              <Box
+                key={project.id}
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1
+                }}
+              >
+                <Typography variant="subtitle2" color="primary" gutterBottom>
+                  关联公司 {index + 1}: {project.company_name}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  冲突内容:
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  {project.conflict_content?.split('、').map((item, i) => (
+                    <Chip
+                      key={i}
+                      label={item}
+                      size="small"
+                      color="warning"
+                      sx={{ mb: 1 }}
+                    />
+                  ))}
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  检测时间: {new Date(project.created_at).toLocaleString()}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
 
           {selectedCheck?.is_resolve ? (
             <Box sx={{ mt: 2 }}>
@@ -341,15 +369,18 @@ export default function ChecksPage() {
               </Typography>
             </Box>
           ) : (
-            <TextField
-              label="解决说明"
-              multiline
-              rows={4}
-              fullWidth
-              value={resolveContent}
-              onChange={(e) => setResolveContent(e.target.value)}
-              sx={{ mt: 2 }}
-            />
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                解决说明
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                value={resolveContent}
+                onChange={(e) => setResolveContent(e.target.value)}
+              />
+            </Box>
           )}
         </DialogContent>
         <DialogActions>

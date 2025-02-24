@@ -85,13 +85,13 @@ export async function POST(
 
     const project = datas[0]
 
-    // 检查权限
-    if (project.bid_user_bid_users !== user.id) {
-      return NextResponse.json(
-        { message: '无权操作此项目' },
-        { status: 403 }
-      )
-    }
+    // // 检查权限
+    // if (project.bid_user_bid_users !== user.id) {
+    //   return NextResponse.json(
+    //     { message: '无权操作此项目' },
+    //     { status: 403 }
+    //   )
+    // }
 
     // 检查项目状态
     if (project.status !== 'registration') {
@@ -127,9 +127,7 @@ export async function POST(
     // 异步执行串标检测
     if (project.bid_company) {
       checkBidConflict(
-        projectId,
-        project.name,
-        project.bid_company.id
+        projectId
       ).catch(error => {
         console.error('串标检测失败:', error)
       })
