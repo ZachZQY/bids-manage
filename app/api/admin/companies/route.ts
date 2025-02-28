@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       name: "bid_companies",
       args: {
         where,
-        order_by: { created_at: ()=>'desc' }
+        order_by: { created_at: () => 'desc' }
       },
       fields: [
         "id",
@@ -76,6 +76,26 @@ export async function POST(request: Request) {
     if (!data.name) {
       return NextResponse.json(
         { error: '请填写公司名称' },
+        { status: 400 }
+      )
+    }
+
+    // 检查是否存在同名公司
+    const { datas: existingCompanies } = await db.find({
+      page_number: 1,
+      page_size: 2,
+      name: "bid_companies",
+      args: {
+        where: {
+          name: { _eq: data.name }
+        }
+      },
+      fields: ["id"]
+    })
+
+    if (existingCompanies && existingCompanies.length > 0) {
+      return NextResponse.json(
+        { error: '已存在同名公司，请更换公司名称' },
         { status: 400 }
       )
     }

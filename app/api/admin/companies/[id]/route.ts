@@ -26,6 +26,27 @@ export async function PUT(
       )
     }
 
+    // 检查是否存在同名公司（排除当前公司）
+    const { datas: existingCompanies } = await db.find({
+      page_number: 1,
+      page_size: 2,
+      name: "bid_companies",
+      args: {
+        where: {
+          name: { _eq: data.name },
+          id: { _neq: Number(paramsData.id) }
+        }
+      },
+      fields: ["id"]
+    })
+
+    if (existingCompanies && existingCompanies.length > 0) {
+      return NextResponse.json(
+        { error: '已存在同名公司，请更换公司名称' },
+        { status: 400 }
+      )
+    }
+
     // 更新公司
     const updatedCompany = await db.mutationGetFirstOne({
       name: "update_bid_companies",
