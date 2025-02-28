@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     // 获取查询参数
     const searchParams = request.nextUrl.searchParams
     const page = Number(searchParams.get('page')) || 1
-    const pageSize = Number(searchParams.get('pageSize')) || 10
+    const pageSize = Number(searchParams.get('pageSize')) || 10000
     const status = searchParams.get('status')
     const search = searchParams.get('search')
 
