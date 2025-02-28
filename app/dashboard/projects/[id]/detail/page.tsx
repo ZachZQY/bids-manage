@@ -238,6 +238,30 @@ export default function ProjectDetailPage() {
                 <Stack spacing={2}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
+                      联系人
+                    </Typography>
+                    <Typography>{project.registration_info?.contact_person}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      联系手机
+                    </Typography>
+                    <Typography>{project.registration_info?.contact_mobile}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      座机号码
+                    </Typography>
+                    <Typography>{project.registration_info?.contact_phone || '-'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      预留邮箱
+                    </Typography>
+                    <Typography>{project.registration_info?.contact_email || '-'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
                       电脑信息
                     </Typography>
                     <Typography>{project.registration_info?.computer}</Typography>
