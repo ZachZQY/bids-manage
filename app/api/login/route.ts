@@ -50,10 +50,11 @@ export async function POST(request: NextRequest) {
       }
     });
     
-    // 直接在response上设置cookie
+    // 直接在response上设置cookie - 修改cookie设置，尝试解决token丢失问题
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // 在宝塔环境下，可能需要禁用secure标志，除非确定使用了HTTPS
+      secure: false, // 修改为false，避免HTTP环境下的cookie问题
       sameSite: 'lax',
       path: '/',
       // 确保cookie不会太快过期
@@ -62,21 +63,25 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('user', JSON.stringify(user), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      // 确保与token cookie设置一致
+      secure: false,
       sameSite: 'lax',
       path: '/',
-      // 确保cookie不会太快过期
       maxAge: 60 * 60 * 24 * 7 // 7天
     });
     
     // 额外设置一个非httpOnly的cookie，帮助客户端检测登录状态
     response.cookies.set('isLoggedIn', 'true', {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7 // 7天
     });
+    
+    // 添加防缓存头，确保重定向不会使用缓存的响应
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
     
     return response;
 
