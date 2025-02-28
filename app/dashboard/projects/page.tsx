@@ -51,7 +51,8 @@ export default function BidHallPage() {
     <>
       <ProjectList 
         type="all" 
-        showCreateButton 
+        showCreateButton
+        showStageStatistics={false}
         onTakeProject={handleTakeProject}
         defaultStatus="pending"
         hideStatusFilter

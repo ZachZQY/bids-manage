@@ -113,7 +113,7 @@ export default function CreateProjectPage() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await fetch('/api/admin/companies?status=active')
+        const res = await fetch('/api/admin/companies?status=active&pageSize=5000&page=1')
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
         setCompanies(data.companies)

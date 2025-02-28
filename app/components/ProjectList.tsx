@@ -44,6 +44,7 @@ interface ProjectListProps {
   type: 'all' | 'my' // 列表类型
   showCreateButton?: boolean // 是否显示创建按钮
   hideStatusFilter?: boolean // 是否隐藏状态筛选
+  showStageStatistics?: boolean // 是否展示统计
   defaultStatus?: BidStatus // 默认状态
   excludeStatuses?: BidStatus[] // 排除的状态
   onTakeProject?: (id: number) => void // 接单回调
@@ -57,6 +58,7 @@ export default function ProjectList({
   type,
   showCreateButton = true,
   hideStatusFilter = false,
+  showStageStatistics = true,
   defaultStatus,
   excludeStatuses = [],
   onTakeProject,
@@ -90,30 +92,30 @@ export default function ProjectList({
 
   // 阶段配置
   const stages = [
-    { 
-      key: 'registration', 
-      label: '报名阶段', 
+    {
+      key: 'registration',
+      label: '报名阶段',
       color: 'primary',
       icon: '📝',
       description: '等待投标人提交报名信息'
     },
-    { 
-      key: 'deposit', 
-      label: '保证金阶段', 
+    {
+      key: 'deposit',
+      label: '保证金阶段',
       color: 'secondary',
       icon: '💰',
       description: '等待投标人缴纳保证金'
     },
-    { 
-      key: 'preparation', 
-      label: '上传阶段', 
+    {
+      key: 'preparation',
+      label: '上传阶段',
       color: 'info',
       icon: '📤',
       description: '等待投标人上传标书文件'
     },
-    { 
-      key: 'bidding', 
-      label: '报价阶段', 
+    {
+      key: 'bidding',
+      label: '报价阶段',
       color: 'warning',
       icon: '💹',
       description: '等待投标人提交报价信息'
@@ -235,7 +237,7 @@ export default function ProjectList({
 
       // 刷新列表
       fetchProjects(page)
-      
+
       // 关闭对话框
       setConfirmCancelDialog(false)
       setSelectedProjectId(null)
@@ -294,7 +296,7 @@ export default function ProjectList({
       // 刷新项目列表
       fetchProjects()
       setDeleteDialogOpen(false)
-      
+
     } catch (err) {
       console.error('删除项目失败:', err)
       setDeleteError(err instanceof Error ? err.message : '删除失败')
@@ -313,18 +315,18 @@ export default function ProjectList({
       gap: 3
     }}>
       {/* 阶段统计 */}
-      <Paper 
+      {showStageStatistics && (<Paper
         elevation={0}
-        sx={{ 
+        sx={{
           p: 3,
           bgcolor: 'grey.50',
           borderRadius: 2
         }}
       >
         <Stack spacing={2}>
-          <Stack 
-            direction="row" 
-            alignItems="center" 
+          <Stack
+            direction="row"
+            alignItems="center"
             spacing={1}
             sx={{ cursor: 'pointer' }}
             onClick={() => setExpanded(!expanded)}
@@ -332,9 +334,9 @@ export default function ProjectList({
             <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600, flex: 1 }}>
               项目阶段概览
             </Typography>
-            <IconButton 
+            <IconButton
               size="small"
-              sx={{ 
+              sx={{
                 transition: 'transform 0.2s',
                 transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)'
               }}
@@ -342,9 +344,9 @@ export default function ProjectList({
               {expanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
             </IconButton>
           </Stack>
-          
+
           <Collapse in={expanded}>
-            <Box sx={{ 
+            <Box sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
               gap: 2
@@ -382,9 +384,9 @@ export default function ProjectList({
                           {description}
                         </Typography>
                       </Box>
-                      <Typography 
-                        variant="h4" 
-                        sx={{ 
+                      <Typography
+                        variant="h4"
+                        sx={{
                           fontWeight: 600,
                           color: status === key ? `${color}.darker` : `${color}.main`
                         }}
@@ -393,7 +395,7 @@ export default function ProjectList({
                       </Typography>
                     </Stack>
                     {status === key && (
-                      <Box sx={{ 
+                      <Box sx={{
                         position: 'absolute',
                         bottom: 0,
                         left: 0,
@@ -410,7 +412,7 @@ export default function ProjectList({
             </Box>
           </Collapse>
         </Stack>
-      </Paper>
+      </Paper>)}
 
       {/* 顶部操作区 */}
       <Paper sx={{ p: 2, bgcolor: 'white' }}>
@@ -425,7 +427,7 @@ export default function ProjectList({
                   displayEmpty
                 >
                   <MenuItem value="all">
-                    全部 ({stats.all|| 0})
+                    全部 ({stats.all || 0})
                   </MenuItem>
                   {availableStatuses.map(([value, config]) => (
                     <MenuItem key={value} value={value}>
@@ -772,7 +774,7 @@ export default function ProjectList({
             <Typography color="error">
               请注意：删除操作不可恢复，请谨慎操作！
             </Typography>
-            
+
             <Typography>
               要删除项目 <strong>{selectedProject?.name}</strong>，请输入完整的项目名称和删除密码：
             </Typography>
