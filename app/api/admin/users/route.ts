@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       )
     }
+    
 
     // 获取查询参数
     const searchParams = request.nextUrl.searchParams

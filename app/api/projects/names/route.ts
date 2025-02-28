@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
 
     const where: Record<string, any> = {}
     if (type == "batch") {
-      where.batch_name = { _ilike: `%${keyword}%` }
+      where.batch_name = { _ilike: `%${keyword.trim()}%` }
     } else if (type == "product") {
-      where.product_name = { _ilike: `%${keyword}%` }
+      where.product_name = { _ilike: `%${keyword.trim()}%` }
     }
     const rows = await db.query(
       {

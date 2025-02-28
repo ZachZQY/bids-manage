@@ -109,9 +109,10 @@ export default function UsersPage() {
         },
         body: JSON.stringify(formData)
       })
+      const data = await res.json()
 
       if (!res.ok) {
-        throw new Error('操作失败')
+        throw new Error(data.error||'操作失败')
       }
 
       // 刷新列表

@@ -33,7 +33,7 @@ export async function PUT(
       name: "bid_companies",
       args: {
         where: {
-          name: { _eq: data.name },
+          name: { _eq: data.name.trim() },
           id: { _neq: Number(paramsData.id) }
         }
       },
@@ -53,7 +53,7 @@ export async function PUT(
       args: {
         where: { id: { _eq: Number(paramsData.id) } },
         _set: {
-          name: data.name,
+          name: data.name.trim(),
           status: data.status
         }
       },

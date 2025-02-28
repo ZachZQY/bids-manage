@@ -219,7 +219,7 @@ export async function POST(request: Request) {
       bid_user_bid_users,
       bid_company_bid_companies
     } = body
-    const name = `${batch_name}（${product_name}）`
+    const name = `${batch_name.trim()}（${product_name.trim()}）`
     const user = await getUser()
     if (!user) {
       return NextResponse.json({ error: '未登录' }, { status: 401 })
@@ -229,8 +229,8 @@ export async function POST(request: Request) {
       args: {
         objects: [{
           name,
-          product_name,
-          batch_name,
+          product_name: product_name.trim(),
+          batch_name: batch_name.trim(),
           bidding_deadline,
           registration_deadline,
           bid_company_bid_companies,

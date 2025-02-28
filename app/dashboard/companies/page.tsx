@@ -47,7 +47,7 @@ export default function CompaniesPage() {
   const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
-  
+
   // 新增/编辑对话框状态
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null)
@@ -77,9 +77,9 @@ export default function CompaniesPage() {
 
       const res = await fetch(`/api/admin/companies?${queryParams}`)
       const data = await res.json()
-      
+
       if (!res.ok) throw new Error(data.error)
-      
+
       setCompanies(data.companies)
       setTotal(data.total)
     } catch (err) {
@@ -98,10 +98,10 @@ export default function CompaniesPage() {
   const handleSubmit = async () => {
     try {
       setSubmitting(true)
-      const url = editingCompany 
+      const url = editingCompany
         ? `/api/admin/companies/${editingCompany.id}`
         : '/api/admin/companies'
-      
+
       const res = await fetch(url, {
         method: editingCompany ? 'PUT' : 'POST',
         headers: {
@@ -110,8 +110,9 @@ export default function CompaniesPage() {
         body: JSON.stringify(formData)
       })
 
+      const data = await res.json()
       if (!res.ok) {
-        throw new Error('操作失败')
+        throw new Error(data.error || '操作失败')
       }
 
       // 刷新列表

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       where.status = { _eq: status }
     }
     if (search) {
-      where.name = { _ilike: `%${search}%` }
+      where.name = { _ilike: `%${search.trim()}%` }
     }
 
     // 获取分页数据和总数
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       name: "bid_companies",
       args: {
         where: {
-          name: { _eq: data.name }
+          name: { _eq: data.name.trim() }
         }
       },
       fields: ["id"]
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       name: "insert_bid_companies",
       args: {
         objects: [{
-          name: data.name,
+          name: data.name.trim(),
           status: data.status
         }]
       },
