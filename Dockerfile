@@ -10,13 +10,13 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # 复制构建产物
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.ts ./
 
 # 安装生产依赖
 RUN npm install --production
@@ -25,4 +25,4 @@ RUN npm install --production
 EXPOSE 3000
 
 # 启动命令
-CMD ["npm", "start"] 
+CMD ["npm", "start"]
