@@ -34,16 +34,24 @@ export default function LoginPage() {
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code })
+        body: JSON.stringify({ code }),
+        credentials: 'include' // 确保包含cookies
       })
 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
 
+      console.log('登录成功，设置用户信息:', data.user)
       setUser(data.user)
-      router.push('/dashboard/projects')
+      
+      // 使用setTimeout延迟跳转，确保cookie已完全设置
+      setTimeout(() => {
+        console.log('正在跳转到仪表盘...')
+        router.push('/dashboard/projects')
+      }, 500)
 
     } catch (err: any) {
+      console.error('登录出错:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -162,7 +170,7 @@ export default function LoginPage() {
 
       <Box sx={{ p: 2, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-          © <span suppressHydrationWarning>{new Date().getFullYear()}</span> 山东雷电电力有限公司 版权所有
+          &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> 山东雷电电力有限公司 版权所有
         </Typography>
       </Box>
     </Box>

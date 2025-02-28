@@ -1,6 +1,5 @@
 import { NextResponse,type NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,25 +35,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = 'test-token'; // 实际应用中应该生成真实的 token
-    const cookieStore = await cookies();
-
-    // 设置 cookie
-    cookieStore.set('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/'
-    });
-
-    cookieStore.set('user', JSON.stringify(user), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/'
-    });
-
-    return NextResponse.json({
+    // 生成随机token (在生产环境中应使用更安全的方法)
+    const token = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    console.log('设置登录token:', token);
+    
+    // 设置 cookie - 修改cookie设置，确保能在服务器环境中正确设置
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -63,8 +49,39 @@ export async function POST(request: NextRequest) {
         phone: user.phone
       }
     });
+    
+    // 直接在response上设置cookie
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      // 确保cookie不会太快过期
+      maxAge: 60 * 60 * 24 * 7 // 7天
+    });
+
+    response.cookies.set('user', JSON.stringify(user), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      // 确保cookie不会太快过期
+      maxAge: 60 * 60 * 24 * 7 // 7天
+    });
+    
+    // 额外设置一个非httpOnly的cookie，帮助客户端检测登录状态
+    response.cookies.set('isLoggedIn', 'true', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7天
+    });
+    
+    return response;
 
   } catch (error) {
+    console.error('登录错误:', error);
     if (error instanceof Error) {
       return NextResponse.json(
         { error: error.message },
@@ -76,4 +93,4 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
-} 
+}
