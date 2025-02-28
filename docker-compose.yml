@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  # Next.js应用
+  bid-manage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bid-manage-container
+    restart: always
+    environment:
+      - NODE_ENV=production
+    networks:
+      - app-network
+    # 如果您有需要保留的数据，可以添加卷
+    # volumes:
+    #   - ./data:/app/data
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: bid-manage-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/www:/var/www/html
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - bid-manage
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
