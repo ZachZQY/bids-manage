@@ -43,7 +43,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(`${origin}/dashboard/projects`);
     }
     console.log('未登录，正常显示登录页');
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
   }
 
   // 仪表盘及其子路由的权限控制
@@ -53,7 +55,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login`);
     }
     console.log('已登录，正常访问仪表盘');
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
   }
 
   // 根路径重定向到登录页
@@ -73,7 +77,9 @@ export function middleware(request: NextRequest) {
   }
 
   console.log('其他路径，正常处理');
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  return response;
 }
 
 export const config = {
